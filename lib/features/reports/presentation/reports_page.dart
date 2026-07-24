@@ -1620,7 +1620,10 @@ class _KpiGrid extends StatelessWidget {
             for (final k in kpis)
               SizedBox(
                 width: k.span >= 2 ? cardWidth * 2 + gap : cardWidth,
-                child: _KpiCard(k),
+                child: _KpiCard(
+                  k,
+                  cardWidth: k.span >= 2 ? cardWidth * 2 + gap : cardWidth,
+                ),
               ),
           ],
         );
@@ -1631,13 +1634,20 @@ class _KpiGrid extends StatelessWidget {
 
 class _KpiCard extends StatelessWidget {
   final ReportKpi kpi;
-  const _KpiCard(this.kpi);
+  final double cardWidth;
+  const _KpiCard(this.kpi, {required this.cardWidth});
 
   @override
   Widget build(BuildContext context) {
     // Deltas ("▲ 12% vs ayer") render as a tinted pill; other sub-labels
     // ("14 días", "31 nuevos") stay as plain text, matching the design.
     final isDelta = kpi.sub.startsWith('▲') || kpi.sub.startsWith('▼');
+    // Scale text down on narrow cards (e.g. 6 KPIs sharing a row at
+    // ~1280px viewport width) so the label stays legible instead of a long
+    // value ("Sáb 18 jul", a product name…) squeezing it down to a sliver —
+    // combined with the flex split below, which guarantees the label a
+    // minimum share of the row regardless of the value's length.
+    final scale = (cardWidth / 190).clamp(0.62, 1.0);
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -1656,11 +1666,16 @@ class _KpiCard extends StatelessWidget {
       child: Stack(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(18, 13, 14, 13),
+            padding: EdgeInsets.fromLTRB(18 * scale, 13, 14 * scale, 13),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
+                // flex: 3 guarantees the label a minimum share of the row
+                // even when the value (flex: 2 below) is long — previously
+                // the value took its full intrinsic width unconditionally,
+                // which could squeeze the label down to a single letter.
                 Expanded(
+                  flex: 3,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
@@ -1671,14 +1686,14 @@ class _KpiCard extends StatelessWidget {
                       // reserves the same height whether its own label
                       // wraps or not.
                       SizedBox(
-                        height: 36,
+                        height: 36 * scale,
                         child: Align(
                           alignment: Alignment.topLeft,
                           child: Text(
                             kpi.label,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.ink3),
+                            style: TextStyle(fontSize: 14 * scale, fontWeight: FontWeight.w700, color: AppColors.ink3),
                           ),
                         ),
                       ),
@@ -1686,7 +1701,7 @@ class _KpiCard extends StatelessWidget {
                       // empty text) — cards that have no `sub` (e.g. "Ticket
                       // promedio") used to skip this block entirely and end
                       // up visibly shorter than their siblings.
-                      const SizedBox(height: 7),
+                      SizedBox(height: 7 * scale),
                       if (isDelta)
                         _Pill(text: kpi.sub, color: kpi.subColor)
                       else
@@ -1694,22 +1709,26 @@ class _KpiCard extends StatelessWidget {
                           kpi.sub,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: kpi.subColor),
+                          style: TextStyle(fontSize: 13.5 * scale, fontWeight: FontWeight.w700, color: kpi.subColor),
                         ),
                     ],
                   ),
                 ),
                 const SizedBox(width: 10),
-                Text(
-                  kpi.value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: kpi.valueFontSize,
-                    fontWeight: FontWeight.w800,
-                    color: kpi.valueColor ?? AppColors.ink,
-                    letterSpacing: -0.3,
-                    height: 1.15,
+                Flexible(
+                  flex: 2,
+                  child: Text(
+                    kpi.value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.right,
+                    style: TextStyle(
+                      fontSize: kpi.valueFontSize * scale,
+                      fontWeight: FontWeight.w800,
+                      color: kpi.valueColor ?? AppColors.ink,
+                      letterSpacing: -0.3,
+                      height: 1.15,
+                    ),
                   ),
                 ),
               ],

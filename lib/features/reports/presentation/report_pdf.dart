@@ -60,9 +60,14 @@ String _fmtDateTime(DateTime d) {
   return '${two(d.day)}/${two(d.month)}/${d.year} ${two(d.hour)}:${two(d.minute)}';
 }
 
-/// The base14 PDF fonts have no glyph for ▲/▼ (renders as a giant fallback
-/// shape) — swap them for ASCII the base font can actually draw.
-String _pdfSafe(String s) => s.replaceAll('▲', '+').replaceAll('▼', '-');
+/// The base14 PDF fonts have no glyph for ▲/▼ or the en/em dash (renders as
+/// a fallback box/notdef shape, e.g. in a "Fechas" range like "18/07/2026 –
+/// 18/07/2026") — swap them for ASCII the base font can actually draw.
+String _pdfSafe(String s) => s
+    .replaceAll('▲', '+')
+    .replaceAll('▼', '-')
+    .replaceAll('–', '-')
+    .replaceAll('—', '-');
 
 // ===========================================================================
 // Header
@@ -184,7 +189,12 @@ class _KpiRows extends pw.StatelessWidget {
               child: pw.Row(
                 crossAxisAlignment: pw.CrossAxisAlignment.center,
                 children: [
+                  // flex: 3 guarantees the label a minimum share of the row
+                  // even when the value (flex: 2 below) is long — it used to
+                  // take its full intrinsic width unconditionally, which
+                  // could squeeze the label down to just a couple letters.
                   pw.Expanded(
+                    flex: 3,
                     child: pw.Column(
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       mainAxisSize: pw.MainAxisSize.min,
@@ -192,6 +202,7 @@ class _KpiRows extends pw.StatelessWidget {
                         pw.Text(
                           kpi.label,
                           maxLines: 1,
+                          overflow: pw.TextOverflow.clip,
                           style: const pw.TextStyle(fontSize: 7.3, color: _ink3),
                         ),
                         if (kpi.sub.isNotEmpty) ...[
@@ -218,9 +229,17 @@ class _KpiRows extends pw.StatelessWidget {
                     ),
                   ),
                   pw.SizedBox(width: 6),
-                  pw.Text(
-                    kpi.value,
-                    style: pw.TextStyle(fontSize: 13.5, fontWeight: pw.FontWeight.bold, color: _ink),
+                  pw.Expanded(
+                    flex: 2,
+                    child: pw.Align(
+                      alignment: pw.Alignment.centerRight,
+                      child: pw.Text(
+                        kpi.value,
+                        maxLines: 1,
+                        overflow: pw.TextOverflow.clip,
+                        style: pw.TextStyle(fontSize: 12.5, fontWeight: pw.FontWeight.bold, color: _ink),
+                      ),
+                    ),
                   ),
                 ],
               ),

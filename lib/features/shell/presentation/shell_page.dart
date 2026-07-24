@@ -98,6 +98,17 @@ class _ShellPageState extends ConsumerState<ShellPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Session is normally cleared by the 401 interceptor mid-session (e.g.
+    // an expired token) rather than through an explicit logout tap, so
+    // there's no user action to hang a navigation off of — react to the
+    // state transition itself instead of leaving the shell stuck rendering
+    // stale data.
+    ref.listen<Session?>(sessionControllerProvider, (previous, next) {
+      if (previous != null && next == null) {
+        context.go('/login');
+      }
+    });
+
     final premState = ref.watch(premisesControllerProvider);
     final session = ref.watch(sessionControllerProvider);
     final currentPath = GoRouterState.of(context).uri.path;
