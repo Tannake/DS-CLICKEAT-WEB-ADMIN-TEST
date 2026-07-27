@@ -23,7 +23,7 @@ class ReasonsRepository {
               CancelReason.fromJson(Map<String, dynamic>.from(e as Map)))
           .toList();
     }
-    return const [];
+    return [];
   }
 
   // ===== Reasons CRUD (orders/reason-cancel-crud) ===========================

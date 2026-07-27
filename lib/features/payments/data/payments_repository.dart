@@ -23,7 +23,7 @@ class PaymentsRepository {
               PaymentMethod.fromJson(Map<String, dynamic>.from(e as Map)))
           .toList();
     }
-    return const [];
+    return [];
   }
 
   // ===== Payment CRUD (payments/crud) =======================================

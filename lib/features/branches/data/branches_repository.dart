@@ -23,7 +23,7 @@ class BranchesRepository {
               BranchSummary.fromJson(Map<String, dynamic>.from(e as Map)))
           .toList();
     }
-    return const [];
+    return [];
   }
 
   /// GET `premises-detail/<userId>/<premId>` — the full editable branch shape.

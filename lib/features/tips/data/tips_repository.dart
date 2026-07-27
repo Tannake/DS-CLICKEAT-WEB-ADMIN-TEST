@@ -22,7 +22,7 @@ class TipsRepository {
           .map((e) => Tip.fromJson(Map<String, dynamic>.from(e as Map)))
           .toList();
     }
-    return const [];
+    return [];
   }
 
   // ===== Tips CRUD (orders/tips-crud) =======================================

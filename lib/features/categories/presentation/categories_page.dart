@@ -7,6 +7,7 @@ import 'package:ds_clickeat_web_admin/core/widgets/scrollable_table.dart';
 import 'package:ds_clickeat_web_admin/features/categories/controllers/categories_controller.dart';
 import 'package:ds_clickeat_web_admin/features/categories/models/category.dart';
 import 'package:ds_clickeat_web_admin/features/categories/models/preparation_area.dart';
+import 'package:ds_clickeat_web_admin/features/categories/models/printer_option.dart';
 import 'package:ds_clickeat_web_admin/features/premises/controllers/premises_controller.dart';
 
 class CategoriesPage extends ConsumerStatefulWidget {
@@ -91,7 +92,7 @@ class _CategoriesPageState extends ConsumerState<CategoriesPage> {
         children: [
           _buildCategoriesSection(state.categories),
           const SizedBox(height: 28),
-          _buildPreparationSection(state.preparationAreas),
+          _buildPreparationSection(state.preparationAreas, state.printerOptions),
         ],
       ),
     );
@@ -217,7 +218,10 @@ class _CategoriesPageState extends ConsumerState<CategoriesPage> {
   // Preparation area section
   // ===========================================================================
 
-  Widget _buildPreparationSection(List<PreparationArea> areas) {
+  Widget _buildPreparationSection(
+    List<PreparationArea> areas,
+    List<PrinterOption> printerOptions,
+  ) {
     final creating = _editKey == 'prep-new';
     return _Section(
       title: 'Área de preparación',
@@ -233,12 +237,15 @@ class _CategoriesPageState extends ConsumerState<CategoriesPage> {
                   'Esta sucursal aún no tiene áreas de preparación registradas.',
             )
           : _Card(
-              minWidth: 520,
+              minWidth: 860,
               children: [
                 const _TableHeader(
                   columns: [
-                    _Col('NOMBRE', 58),
-                    _Col('PRODUCTOS', 30),
+                    _Col('NOMBRE', 20),
+                    _Col('PRODUCTOS', 14),
+                    _Col('IMPRESORA', 20),
+                    _Col('IMPRESIÓN', 18),
+                    _Col('ESTADO', 16),
                     _Col('', 12),
                   ],
                 ),
@@ -247,9 +254,20 @@ class _CategoriesPageState extends ConsumerState<CategoriesPage> {
                     _PreparationEditRow(
                       key: ValueKey('prep-edit-${a.prepId}'),
                       initialName: a.prepName,
+                      initialPrinterName: a.prinName,
+                      initialPrintEnabled: a.prepPrintEnabled,
+                      initialAvailable: a.prepAvailable,
+                      printerOptions: printerOptions,
                       saving: _saving,
                       onCancel: _cancelEdit,
-                      onSave: (name) => _savePreparation(a.prepId, name),
+                      onSave: (name, printerId, printEnabled, available) =>
+                          _savePreparation(
+                        a.prepId,
+                        name,
+                        printerId,
+                        printEnabled,
+                        available,
+                      ),
                     )
                   else
                     _PreparationRow(
@@ -258,21 +276,40 @@ class _CategoriesPageState extends ConsumerState<CategoriesPage> {
                       onEdit: () =>
                           setState(() => _editKey = 'prep-${a.prepId}'),
                       onDelete: () => _deletePreparation(a),
+                      onTogglePrint: () => _togglePrint(a),
+                      onToggleAvailable: () => _toggleAvailable(a),
                     ),
                 if (creating)
                   _PreparationEditRow(
                     key: const ValueKey('prep-new'),
                     initialName: '',
+                    initialPrinterName: 'Default',
+                    initialPrintEnabled: false,
+                    initialAvailable: true,
+                    printerOptions: printerOptions,
                     saving: _saving,
                     onCancel: _cancelEdit,
-                    onSave: (name) => _savePreparation(null, name),
+                    onSave: (name, printerId, printEnabled, available) =>
+                        _savePreparation(
+                      null,
+                      name,
+                      printerId,
+                      printEnabled,
+                      available,
+                    ),
                   ),
               ],
             ),
     );
   }
 
-  Future<void> _savePreparation(int? id, String name) async {
+  Future<void> _savePreparation(
+    int? id,
+    String name,
+    int? printerId,
+    bool printEnabled,
+    bool available,
+  ) async {
     if (name.trim().isEmpty) {
       _toast('El nombre es obligatorio.');
       return;
@@ -280,13 +317,38 @@ class _CategoriesPageState extends ConsumerState<CategoriesPage> {
     setState(() => _saving = true);
     final notifier = ref.read(categoriesControllerProvider.notifier);
     final error = id == null
-        ? await notifier.createPreparationArea(name.trim())
-        : await notifier.updatePreparationArea(id, name.trim());
+        ? await notifier.createPreparationArea(
+            name.trim(),
+            printerId,
+            printEnabled,
+            available,
+          )
+        : await notifier.updatePreparationArea(
+            id,
+            name.trim(),
+            printerId,
+            printEnabled,
+            available,
+          );
     if (!mounted) return;
     setState(() {
       _saving = false;
       if (error == null) _editKey = null;
     });
+    if (error != null) _toast(error);
+  }
+
+  Future<void> _togglePrint(PreparationArea a) async {
+    final error = await ref
+        .read(categoriesControllerProvider.notifier)
+        .togglePrintEnabled(a.prepId);
+    if (error != null) _toast(error);
+  }
+
+  Future<void> _toggleAvailable(PreparationArea a) async {
+    final error = await ref
+        .read(categoriesControllerProvider.notifier)
+        .toggleAvailable(a.prepId);
     if (error != null) _toast(error);
   }
 
@@ -678,16 +740,22 @@ class _PreparationRow extends StatelessWidget {
   final bool enabled;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final VoidCallback onTogglePrint;
+  final VoidCallback onToggleAvailable;
 
   const _PreparationRow({
     required this.area,
     required this.enabled,
     required this.onEdit,
     required this.onDelete,
+    required this.onTogglePrint,
+    required this.onToggleAvailable,
   });
 
   @override
   Widget build(BuildContext context) {
+    final printEnabled = area.prepPrintEnabled;
+    final available = area.prepAvailable;
     return Container(
       decoration: const BoxDecoration(
         border: Border(top: BorderSide(color: AppColors.line)),
@@ -696,7 +764,7 @@ class _PreparationRow extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            flex: 58,
+            flex: 20,
             child: Text(
               area.prepName,
               style: const TextStyle(
@@ -707,11 +775,69 @@ class _PreparationRow extends StatelessWidget {
             ),
           ),
           Expanded(
-            flex: 30,
+            flex: 14,
             child: Text(
               '${area.prodCount} '
               '${area.prodCount == 1 ? 'producto' : 'productos'}',
               style: const TextStyle(fontSize: 13, color: AppColors.ink2),
+            ),
+          ),
+          Expanded(
+            flex: 20,
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.print_outlined,
+                  size: 15,
+                  color: AppColors.ink3,
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    area.prinName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppColors.ink2,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            flex: 18,
+            child: Row(
+              children: [
+                _Toggle(on: printEnabled, onChanged: (_) => onTogglePrint()),
+                const SizedBox(width: 10),
+                Text(
+                  printEnabled ? 'Habilitada' : 'Deshabilitada',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: printEnabled ? AppColors.greenInk : AppColors.ink3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            flex: 16,
+            child: Row(
+              children: [
+                _Toggle(on: available, onChanged: (_) => onToggleAvailable()),
+                const SizedBox(width: 10),
+                Text(
+                  available ? 'Activa' : 'Inactiva',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: available ? AppColors.greenInk : AppColors.ink3,
+                  ),
+                ),
+              ],
             ),
           ),
           Expanded(
@@ -730,13 +856,27 @@ class _PreparationRow extends StatelessWidget {
 
 class _PreparationEditRow extends StatefulWidget {
   final String initialName;
+  final String initialPrinterName;
+  final bool initialPrintEnabled;
+  final bool initialAvailable;
+  final List<PrinterOption> printerOptions;
   final bool saving;
   final VoidCallback onCancel;
-  final void Function(String name) onSave;
+  final void Function(
+    String name,
+    int? printerId,
+    bool printEnabled,
+    bool available,
+  )
+  onSave;
 
   const _PreparationEditRow({
     super.key,
     required this.initialName,
+    required this.initialPrinterName,
+    required this.initialPrintEnabled,
+    required this.initialAvailable,
+    required this.printerOptions,
     required this.saving,
     required this.onCancel,
     required this.onSave,
@@ -750,12 +890,28 @@ class _PreparationEditRowState extends State<_PreparationEditRow> {
   late final TextEditingController _name = TextEditingController(
     text: widget.initialName,
   );
+  late int? _printerId = _resolveInitialPrinterId();
+  late bool _printEnabled = widget.initialPrintEnabled;
+  late bool _available = widget.initialAvailable;
+
+  /// Matches the area's stored `prin_name` against the registered printer
+  /// list to find its id. No match (e.g. the backend's "Default" sentinel
+  /// for an unassigned area) resolves to `null` — the "Predeterminada" pick.
+  int? _resolveInitialPrinterId() {
+    for (final option in widget.printerOptions) {
+      if (option.prinName == widget.initialPrinterName) return option.prinId;
+    }
+    return null;
+  }
 
   @override
   void dispose() {
     _name.dispose();
     super.dispose();
   }
+
+  void _submit() =>
+      widget.onSave(_name.text, _printerId, _printEnabled, _available);
 
   @override
   Widget build(BuildContext context) {
@@ -768,27 +924,199 @@ class _PreparationEditRowState extends State<_PreparationEditRow> {
       child: Row(
         children: [
           Expanded(
-            flex: 58,
+            flex: 20,
             child: Padding(
               padding: const EdgeInsets.only(right: 12),
               child: _CellField(
                 controller: _name,
                 hint: 'Nombre',
                 autofocus: true,
-                onSubmitted: (_) => widget.onSave(_name.text),
+                onSubmitted: (_) => _submit(),
               ),
             ),
           ),
-          const Expanded(flex: 30, child: SizedBox.shrink()),
+          const Expanded(flex: 14, child: SizedBox.shrink()),
+          Expanded(
+            flex: 20,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: _PrinterPicker(
+                value: _printerId,
+                options: widget.printerOptions,
+                onChanged: (v) => setState(() => _printerId = v),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 18,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: _Toggle(
+                on: _printEnabled,
+                onChanged: (v) => setState(() => _printEnabled = v),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 16,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: _Toggle(
+                on: _available,
+                onChanged: (v) => setState(() => _available = v),
+              ),
+            ),
+          ),
           Expanded(
             flex: 12,
             child: _EditActions(
               saving: widget.saving,
-              onSave: () => widget.onSave(_name.text),
+              onSave: _submit,
               onCancel: widget.onCancel,
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ===========================================================================
+// Printer picker (preparation area printer assignment)
+// ===========================================================================
+
+class _PrinterPicker extends StatelessWidget {
+  /// Selected printer id, or `null` for "Predeterminada" (no printer
+  /// assigned — the backend's own "Default" sentinel).
+  final int? value;
+  final List<PrinterOption> options;
+  final ValueChanged<int?> onChanged;
+
+  const _PrinterPicker({
+    required this.value,
+    required this.options,
+    required this.onChanged,
+  });
+
+  static const _defaultLabel = 'Predeterminada';
+
+  String get _valueLabel {
+    for (final option in options) {
+      if (option.prinId == value) return option.prinName;
+    }
+    return _defaultLabel;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        return PopupMenuButton<int?>(
+          onSelected: onChanged,
+          padding: EdgeInsets.zero,
+          position: PopupMenuPosition.under,
+          offset: const Offset(0, 6),
+          color: Colors.white,
+          elevation: 8,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: const BorderSide(color: AppColors.line),
+          ),
+          constraints: BoxConstraints(minWidth: width, maxWidth: width),
+          itemBuilder: (context) => [
+            _printerMenuItem(id: null, name: _defaultLabel),
+            for (final option in options)
+              _printerMenuItem(id: option.prinId, name: option.prinName),
+          ],
+          child: Container(
+            width: width,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AppColors.line),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _valueLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 13.5,
+                      color: AppColors.ink,
+                    ),
+                  ),
+                ),
+                const Icon(Icons.expand_more, size: 18, color: AppColors.ink3),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  PopupMenuItem<int?> _printerMenuItem({required int? id, required String name}) {
+    return PopupMenuItem<int?>(
+      value: id,
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(name, style: const TextStyle(fontSize: 13.5)),
+          ),
+          if (id == value)
+            const Icon(Icons.check, size: 16, color: AppColors.greenInk),
+        ],
+      ),
+    );
+  }
+}
+
+// ===========================================================================
+// Toggle (matches the design's green pill switch)
+// ===========================================================================
+
+class _Toggle extends StatelessWidget {
+  final bool on;
+  final ValueChanged<bool> onChanged;
+
+  const _Toggle({required this.on, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => onChanged(!on),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        width: 42,
+        height: 24,
+        decoration: BoxDecoration(
+          color: on ? AppColors.green : const Color(0xFFD4DAE3),
+          borderRadius: BorderRadius.circular(99),
+        ),
+        child: AnimatedAlign(
+          duration: const Duration(milliseconds: 160),
+          alignment: on ? Alignment.centerRight : Alignment.centerLeft,
+          child: Container(
+            width: 18,
+            height: 18,
+            margin: const EdgeInsets.symmetric(horizontal: 3),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.18),
+                  blurRadius: 2,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

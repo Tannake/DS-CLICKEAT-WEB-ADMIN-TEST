@@ -49,6 +49,7 @@ const _sections = [
   ]),
   _MenuSection('Negocio', [
     _MenuItem(Icons.store_outlined, 'Sucursales', '/app/branches'),
+    _MenuItem(Icons.print_outlined, 'Impresoras', '/app/printers'),
   ]),
   _MenuSection('Reportes', [
     _MenuItem(Icons.bar_chart_outlined, 'Dashboard diario',

@@ -3,16 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ds_clickeat_web_admin/features/categories/data/categories_repository.dart';
 import 'package:ds_clickeat_web_admin/features/categories/models/category.dart';
 import 'package:ds_clickeat_web_admin/features/categories/models/preparation_area.dart';
+import 'package:ds_clickeat_web_admin/features/categories/models/printer_option.dart';
 
 class CategoriesState {
   final List<Category> categories;
   final List<PreparationArea> preparationAreas;
+  final List<PrinterOption> printerOptions;
   final bool loading;
   final String? error;
 
   const CategoriesState({
     this.categories = const [],
     this.preparationAreas = const [],
+    this.printerOptions = const [],
     this.loading = false,
     this.error,
   });
@@ -20,11 +23,13 @@ class CategoriesState {
   CategoriesState copyWith({
     List<Category>? categories,
     List<PreparationArea>? preparationAreas,
+    List<PrinterOption>? printerOptions,
     bool? loading,
     String? error,
   }) => CategoriesState(
     categories: categories ?? this.categories,
     preparationAreas: preparationAreas ?? this.preparationAreas,
+    printerOptions: printerOptions ?? this.printerOptions,
     loading: loading ?? this.loading,
     error: error,
   );
@@ -65,6 +70,7 @@ class CategoriesController extends StateNotifier<CategoriesState> {
       state = CategoriesState(
         categories: categories,
         preparationAreas: prepAreas,
+        printerOptions: data.printerOptions,
         loading: false,
       );
     } catch (e) {
@@ -109,16 +115,43 @@ class CategoriesController extends StateNotifier<CategoriesState> {
 
   // ===== Preparation area CRUD ============================================
 
-  Future<String?> createPreparationArea(String name) =>
-      _run(() => _repo.createPreparationArea(premId: _premId!, name: name));
+  Future<String?> createPreparationArea(
+    String name,
+    int? printerId,
+    bool printEnabled,
+    bool available,
+  ) => _run(
+    () => _repo.createPreparationArea(
+      premId: _premId!,
+      name: name,
+      printerId: printerId,
+      printEnabled: printEnabled,
+      available: available,
+    ),
+  );
 
-  Future<String?> updatePreparationArea(int prepId, String name) => _runLocal(
+  Future<String?> updatePreparationArea(
+    int prepId,
+    String name,
+    int? printerId,
+    bool printEnabled,
+    bool available,
+  ) => _runLocal(
     () => _repo.updatePreparationArea(
       premId: _premId!,
       prepId: prepId,
       name: name,
+      printerId: printerId,
+      printEnabled: printEnabled,
+      available: available,
     ),
-    () => _patchPreparationArea(prepId, name),
+    () => _patchPreparationArea(
+      prepId,
+      name,
+      printerId,
+      printEnabled,
+      available,
+    ),
   );
 
   Future<String?> deletePreparationArea(int prepId) => _runLocal(
@@ -130,6 +163,45 @@ class CategoriesController extends StateNotifier<CategoriesState> {
       ],
     ),
   );
+
+  /// Flips a preparation area's print-enabled flag, persisting via update.
+  Future<String?> togglePrintEnabled(int prepId) {
+    final area = state.preparationAreas.firstWhere(
+      (a) => a.prepId == prepId,
+    );
+    return updatePreparationArea(
+      prepId,
+      area.prepName,
+      _printerIdForName(area.prinName),
+      !area.prepPrintEnabled,
+      area.prepAvailable,
+    );
+  }
+
+  /// Flips a preparation area's active flag, persisting via update.
+  Future<String?> toggleAvailable(int prepId) {
+    final area = state.preparationAreas.firstWhere(
+      (a) => a.prepId == prepId,
+    );
+    return updatePreparationArea(
+      prepId,
+      area.prepName,
+      _printerIdForName(area.prinName),
+      area.prepPrintEnabled,
+      !area.prepAvailable,
+    );
+  }
+
+  /// Resolves a preparation area's stored `prin_name` to the matching
+  /// registered printer's id, or `null` (the "Predeterminada" sentinel) if it
+  /// doesn't match any registered printer — e.g. the backend's own "Default"
+  /// placeholder for an area with no printer assigned yet.
+  int? _printerIdForName(String name) {
+    for (final option in state.printerOptions) {
+      if (option.prinName == name) return option.prinId;
+    }
+    return null;
+  }
 
   Future<String?> _run(Future<void> Function() action) async {
     if (_premId == null) return 'No hay sucursal seleccionada.';
@@ -178,7 +250,14 @@ class CategoriesController extends StateNotifier<CategoriesState> {
     state = state.copyWith(categories: categories);
   }
 
-  void _patchPreparationArea(int prepId, String name) {
+  void _patchPreparationArea(
+    int prepId,
+    String name,
+    int? printerId,
+    bool printEnabled,
+    bool available,
+  ) {
+    final printerName = _printerNameForId(printerId);
     final areas = [
       for (final area in state.preparationAreas)
         if (area.prepId == prepId)
@@ -186,10 +265,25 @@ class CategoriesController extends StateNotifier<CategoriesState> {
             prepId: area.prepId,
             prepName: name,
             prodCount: area.prodCount,
+            prinName: printerName,
+            prepPrintEnabled: printEnabled,
+            prepAvailable: available,
           )
         else
           area,
     ]..sort((a, b) => a.prepName.compareTo(b.prepName));
     state = state.copyWith(preparationAreas: areas);
+  }
+
+  /// The inverse of [_printerIdForName]: resolves a printer id back to its
+  /// display name, falling back to the backend's own "Default" sentinel for
+  /// `null` (no printer assigned) or an id that no longer matches a
+  /// registered printer.
+  String _printerNameForId(int? printerId) {
+    if (printerId == null) return 'Default';
+    for (final option in state.printerOptions) {
+      if (option.prinId == printerId) return option.prinName;
+    }
+    return 'Default';
   }
 }

@@ -4,20 +4,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ds_clickeat_web_admin/core/http/dio_client.dart';
 import 'package:ds_clickeat_web_admin/features/categories/models/category.dart';
 import 'package:ds_clickeat_web_admin/features/categories/models/preparation_area.dart';
+import 'package:ds_clickeat_web_admin/features/categories/models/printer_option.dart';
 
 final categoriesRepositoryProvider = Provider<CategoriesRepository>((ref) {
   return CategoriesRepository(ref.read(dioProvider));
 });
 
 /// Combined payload returned by `products/category-preparation/<premId>`:
-/// the menu categories plus the preparation areas, each with a product count.
+/// the menu categories, the preparation areas (each with a product count),
+/// and the premise's registered printers (for the preparation area's
+/// printer picker).
 class CategoryPreparationData {
   final List<Category> categories;
   final List<PreparationArea> preparationAreas;
+  final List<PrinterOption> printerOptions;
 
   const CategoryPreparationData({
     this.categories = const [],
     this.preparationAreas = const [],
+    this.printerOptions = const [],
   });
 }
 
@@ -40,9 +45,15 @@ class CategoriesRepository {
           .map((e) =>
               PreparationArea.fromJson(Map<String, dynamic>.from(e as Map)))
           .toList();
+      final printerOptions = (result['printer'] as List? ?? const [])
+          .map(
+            (e) => PrinterOption.fromJson(Map<String, dynamic>.from(e as Map)),
+          )
+          .toList();
       return CategoryPreparationData(
         categories: categories,
         preparationAreas: prepAreas,
+        printerOptions: printerOptions,
       );
     }
     return const CategoryPreparationData();
@@ -98,11 +109,17 @@ class CategoriesRepository {
   Future<void> createPreparationArea({
     required int premId,
     required String name,
+    required int? printerId,
+    required bool printEnabled,
+    required bool available,
   }) async {
     await _crud('products/preparation-area-crud', {
       'prem_id': premId,
       'prep_type': 'I',
       'prep_name': name,
+      'prin_id': printerId,
+      'prep_print_enabled': printEnabled,
+      'prep_available': available,
     });
   }
 
@@ -110,12 +127,18 @@ class CategoriesRepository {
     required int premId,
     required int prepId,
     required String name,
+    required int? printerId,
+    required bool printEnabled,
+    required bool available,
   }) async {
     await _crud('products/preparation-area-crud', {
       'prem_id': premId,
       'prep_type': 'U',
       'prep_id': prepId,
       'prep_name': name,
+      'prin_id': printerId,
+      'prep_print_enabled': printEnabled,
+      'prep_available': available,
     });
   }
 

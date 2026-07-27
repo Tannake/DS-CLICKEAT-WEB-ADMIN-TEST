@@ -10,6 +10,7 @@ import 'package:ds_clickeat_web_admin/features/tables/presentation/tables_page.d
 import 'package:ds_clickeat_web_admin/features/cobros/presentation/cobros_page.dart';
 import 'package:ds_clickeat_web_admin/features/reasons/presentation/reasons_page.dart';
 import 'package:ds_clickeat_web_admin/features/branches/presentation/branches_page.dart';
+import 'package:ds_clickeat_web_admin/features/printers/presentation/printers_page.dart';
 import 'package:ds_clickeat_web_admin/features/reports/presentation/reports_page.dart';
 
 final router = GoRouter(
@@ -53,6 +54,10 @@ final router = GoRouter(
         GoRoute(
           path: '/app/branches',
           builder: (context, state) => const BranchesPage(),
+        ),
+        GoRoute(
+          path: '/app/printers',
+          builder: (context, state) => const PrintersPage(),
         ),
         GoRoute(
           path: '/app/reports/dashboard',
