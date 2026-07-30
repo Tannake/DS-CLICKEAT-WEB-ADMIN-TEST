@@ -141,29 +141,40 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              RichText(
-                                text: const TextSpan(
-                                  style: TextStyle(
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.w800,
-                                    height: 1.0,
-                                    letterSpacing: .3,
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Image.asset(
+                                    'assets/images/ClickEat-logo-48.png',
+                                    width: 40,
+                                    height: 40,
                                   ),
-                                  children: [
-                                    TextSpan(
-                                        text: 'Click',
-                                        style:
-                                            TextStyle(color: Colors.black)),
-                                    TextSpan(
-                                        text: 'Eat',
-                                        style: TextStyle(
-                                            color: Color(0xFFF9B93B))),
-                                    TextSpan(
-                                        text: ' - Admin',
-                                        style:
-                                            TextStyle(color: Colors.black)),
-                                  ],
-                                ),
+                                  const SizedBox(width: 10),
+                                  RichText(
+                                    text: const TextSpan(
+                                      style: TextStyle(
+                                        fontSize: 28,
+                                        fontWeight: FontWeight.w800,
+                                        height: 1.0,
+                                        letterSpacing: .3,
+                                      ),
+                                      children: [
+                                        TextSpan(
+                                            text: 'Click',
+                                            style: TextStyle(
+                                                color: Colors.black)),
+                                        TextSpan(
+                                            text: 'Eat',
+                                            style: TextStyle(
+                                                color: Color(0xFFF9B93B))),
+                                        TextSpan(
+                                            text: ' - Admin',
+                                            style: TextStyle(
+                                                color: Colors.black)),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ),
                               const SizedBox(height: 24),
                               Align(

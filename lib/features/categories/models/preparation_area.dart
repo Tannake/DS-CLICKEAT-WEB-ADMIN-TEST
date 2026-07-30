@@ -9,9 +9,8 @@ class PreparationArea {
   /// Number of products linked to this preparation area.
   final int prodCount;
 
-  /// Name of the printer assigned to this area's tickets — either a
-  /// registered printer's name or the "Default" sentinel meaning the
-  /// premise's default printer.
+  /// Name of the printer assigned to this area's tickets, or empty when
+  /// the area uses the premise's default printer (no printer assigned).
   final String prinName;
 
   /// Whether tickets for this area are automatically sent to print.
@@ -34,9 +33,7 @@ class PreparationArea {
       prepId: (json['prep_id'] as num?)?.toInt() ?? 0,
       prepName: (json['prep_name'] as String?)?.trim() ?? '',
       prodCount: (json['prod_count'] as num?)?.toInt() ?? 0,
-      prinName: (json['prin_name'] as String?)?.trim().isNotEmpty == true
-          ? (json['prin_name'] as String).trim()
-          : 'Default',
+      prinName: (json['prin_name'] as String?)?.trim() ?? '',
       prepPrintEnabled: _parseBool(json['prep_print_enabled']),
       prepAvailable: _parseBool(json['prep_available'], defaultValue: true),
     );

@@ -193,9 +193,8 @@ class CategoriesController extends StateNotifier<CategoriesState> {
   }
 
   /// Resolves a preparation area's stored `prin_name` to the matching
-  /// registered printer's id, or `null` (the "Predeterminada" sentinel) if it
-  /// doesn't match any registered printer — e.g. the backend's own "Default"
-  /// placeholder for an area with no printer assigned yet.
+  /// registered printer's id, or `null` if it doesn't match any registered
+  /// printer — e.g. an area with no printer assigned yet.
   int? _printerIdForName(String name) {
     for (final option in state.printerOptions) {
       if (option.prinName == name) return option.prinId;
@@ -276,14 +275,13 @@ class CategoriesController extends StateNotifier<CategoriesState> {
   }
 
   /// The inverse of [_printerIdForName]: resolves a printer id back to its
-  /// display name, falling back to the backend's own "Default" sentinel for
-  /// `null` (no printer assigned) or an id that no longer matches a
-  /// registered printer.
+  /// display name, falling back to empty (no printer assigned) for `null`
+  /// or an id that no longer matches a registered printer.
   String _printerNameForId(int? printerId) {
-    if (printerId == null) return 'Default';
+    if (printerId == null) return '';
     for (final option in state.printerOptions) {
       if (option.prinId == printerId) return option.prinName;
     }
-    return 'Default';
+    return '';
   }
 }

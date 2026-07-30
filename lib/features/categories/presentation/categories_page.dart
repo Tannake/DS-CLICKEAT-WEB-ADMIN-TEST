@@ -283,7 +283,7 @@ class _CategoriesPageState extends ConsumerState<CategoriesPage> {
                   _PreparationEditRow(
                     key: const ValueKey('prep-new'),
                     initialName: '',
-                    initialPrinterName: 'Default',
+                    initialPrinterName: '',
                     initialPrintEnabled: false,
                     initialAvailable: true,
                     printerOptions: printerOptions,
@@ -895,8 +895,8 @@ class _PreparationEditRowState extends State<_PreparationEditRow> {
   late bool _available = widget.initialAvailable;
 
   /// Matches the area's stored `prin_name` against the registered printer
-  /// list to find its id. No match (e.g. the backend's "Default" sentinel
-  /// for an unassigned area) resolves to `null` — the "Predeterminada" pick.
+  /// list to find its id. No match (e.g. an empty/unassigned `prin_name`)
+  /// resolves to `null` — no printer selected.
   int? _resolveInitialPrinterId() {
     for (final option in widget.printerOptions) {
       if (option.prinName == widget.initialPrinterName) return option.prinId;
@@ -986,8 +986,8 @@ class _PreparationEditRowState extends State<_PreparationEditRow> {
 // ===========================================================================
 
 class _PrinterPicker extends StatelessWidget {
-  /// Selected printer id, or `null` for "Predeterminada" (no printer
-  /// assigned — the backend's own "Default" sentinel).
+  /// Selected printer id, or `null` when it doesn't match any of the
+  /// registered printers returned by the service.
   final int? value;
   final List<PrinterOption> options;
   final ValueChanged<int?> onChanged;
@@ -998,13 +998,11 @@ class _PrinterPicker extends StatelessWidget {
     required this.onChanged,
   });
 
-  static const _defaultLabel = 'Predeterminada';
-
   String get _valueLabel {
     for (final option in options) {
       if (option.prinId == value) return option.prinName;
     }
-    return _defaultLabel;
+    return '';
   }
 
   @override
@@ -1025,7 +1023,6 @@ class _PrinterPicker extends StatelessWidget {
           ),
           constraints: BoxConstraints(minWidth: width, maxWidth: width),
           itemBuilder: (context) => [
-            _printerMenuItem(id: null, name: _defaultLabel),
             for (final option in options)
               _printerMenuItem(id: option.prinId, name: option.prinName),
           ],

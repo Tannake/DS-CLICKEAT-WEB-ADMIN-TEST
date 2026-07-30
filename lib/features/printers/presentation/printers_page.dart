@@ -753,7 +753,10 @@ class _PrinterEditorState extends State<_PrinterEditor> {
         : '',
   );
 
-  late String _connectionType = widget.printer?.prinConnectionType ?? 'NETWORK';
+  late String _connectionType =
+      widget.printer?.prinConnectionType == 'WINDOWS'
+          ? 'USB'
+          : (widget.printer?.prinConnectionType ?? 'NETWORK');
   late bool _isCustomUsage =
       widget.printer != null && widget.printer!.prinUsageType != 'RECEIPT';
   late int _paperWidth = widget.printer?.prinPaperWidth ?? 80;
@@ -784,7 +787,7 @@ class _PrinterEditorState extends State<_PrinterEditor> {
       setState(() => _error = 'La IP es obligatoria para conexión de red.');
       return;
     }
-    if (_connectionType == 'WINDOWS' && _windowsName.text.trim().isEmpty) {
+    if (_connectionType == 'USB' && _windowsName.text.trim().isEmpty) {
       setState(
         () => _error = 'El nombre de impresora de Windows es obligatorio.',
       );
@@ -804,7 +807,7 @@ class _PrinterEditorState extends State<_PrinterEditor> {
         port: _connectionType == 'NETWORK'
             ? (int.tryParse(_port.text.trim()) ?? 9100)
             : null,
-        windowsName: _connectionType == 'WINDOWS'
+        windowsName: _connectionType == 'USB'
             ? _windowsName.text.trim()
             : null,
         paperWidth: _paperWidth,
@@ -855,11 +858,6 @@ class _PrinterEditorState extends State<_PrinterEditor> {
                     label: Text('USB'),
                     icon: Icon(Icons.usb, size: 16),
                   ),
-                  ButtonSegment(
-                    value: 'WINDOWS',
-                    label: Text('Windows'),
-                    icon: Icon(Icons.desktop_windows_outlined, size: 16),
-                  ),
                 ],
                 selected: {_connectionType},
                 onSelectionChanged: (s) =>
@@ -899,7 +897,7 @@ class _PrinterEditorState extends State<_PrinterEditor> {
                     ),
                   ],
                 ),
-              ] else if (_connectionType == 'WINDOWS') ...[
+              ] else if (_connectionType == 'USB') ...[
                 const SizedBox(height: 14),
                 const _FieldLabel('Nombre de impresora en Windows'),
                 const SizedBox(height: 8),

@@ -182,6 +182,12 @@ class _ShellPageState extends ConsumerState<ShellPage> {
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
           child: Row(
             children: [
+              Image.asset(
+                'assets/images/ClickEat-logo-32.png',
+                width: 28,
+                height: 28,
+              ),
+              const SizedBox(width: 8),
               RichText(
                 text: const TextSpan(
                   style: TextStyle(
@@ -356,6 +362,12 @@ class _CompactTopBar extends StatelessWidget {
                   onPressed: onMenuTap,
                   tooltip: 'Menú',
                 ),
+                Image.asset(
+                  'assets/images/ClickEat-logo-24.png',
+                  width: 22,
+                  height: 22,
+                ),
+                const SizedBox(width: 6),
                 RichText(
                   text: const TextSpan(
                     style: TextStyle(

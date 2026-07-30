@@ -1,11 +1,11 @@
 {
-    "name": "ds_clickeat_web_admin",
-    "short_name": "ds_clickeat_web_admin",
+    "name": "ClickEat Admin",
+    "short_name": "ClickEat Admin",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#16203B",
+    "theme_color": "#16203B",
+    "description": "ClickEat Admin — panel de administración.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
