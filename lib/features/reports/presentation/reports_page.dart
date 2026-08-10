@@ -11,11 +11,13 @@ import 'package:ds_clickeat_web_admin/features/reports/controllers/daily_report_
 import 'package:ds_clickeat_web_admin/features/reports/controllers/orders_report_controller.dart';
 import 'package:ds_clickeat_web_admin/features/reports/controllers/product_report_controller.dart';
 import 'package:ds_clickeat_web_admin/features/reports/controllers/sales_report_controller.dart';
+import 'package:ds_clickeat_web_admin/features/reports/controllers/tips_report_controller.dart';
 import 'package:ds_clickeat_web_admin/features/reports/data/category_csv.dart';
 import 'package:ds_clickeat_web_admin/features/reports/data/orders_csv.dart';
 import 'package:ds_clickeat_web_admin/features/reports/data/product_csv.dart';
 import 'package:ds_clickeat_web_admin/features/reports/data/reports_repository.dart';
 import 'package:ds_clickeat_web_admin/features/reports/data/sales_csv.dart';
+import 'package:ds_clickeat_web_admin/features/reports/data/tips_csv.dart';
 import 'package:ds_clickeat_web_admin/features/reports/models/report_view.dart';
 import 'package:ds_clickeat_web_admin/features/reports/presentation/category_report_view.dart';
 import 'package:ds_clickeat_web_admin/features/reports/presentation/daily_report_view.dart';
@@ -23,6 +25,7 @@ import 'package:ds_clickeat_web_admin/features/reports/presentation/orders_repor
 import 'package:ds_clickeat_web_admin/features/reports/presentation/product_report_view.dart';
 import 'package:ds_clickeat_web_admin/features/reports/presentation/report_pdf.dart';
 import 'package:ds_clickeat_web_admin/features/reports/presentation/sales_report_view.dart';
+import 'package:ds_clickeat_web_admin/features/reports/presentation/tips_report_view.dart';
 
 export 'package:ds_clickeat_web_admin/features/reports/models/report_view.dart'
     show ReportType;
@@ -71,6 +74,12 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
         ref.read(categoryReportControllerProvider.notifier).loadParameters();
       });
     }
+    if (widget.type == ReportType.propinas) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ref.read(tipsReportControllerProvider.notifier).loadParameters();
+      });
+    }
   }
 
   @override
@@ -86,6 +95,8 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
         return _buildProductos(context);
       case ReportType.categorias:
         return _buildCategorias(context);
+      case ReportType.propinas:
+        return _buildPropinas(context);
     }
   }
 
@@ -502,6 +513,80 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
     final stamp =
         '${today.year}${today.month.toString().padLeft(2, '0')}${today.day.toString().padLeft(2, '0')}';
     downloadBytesFile('reporte-categorias-$stamp.pdf', bytes, mimeType: 'application/pdf');
+  }
+
+  // ===========================================================================
+  // Reporte de propinas (live) — simpler than every other report: no KPI
+  // cards, no charts, no server-side table pagination. The detail table
+  // sourced from `reports/tips-export` IS the whole report.
+  // ===========================================================================
+
+  Widget _buildPropinas(BuildContext context) {
+    final state = ref.watch(tipsReportControllerProvider);
+    final initialLoad = state.loadingParams ||
+        (state.hasQueried && state.rows == null && state.loadingData);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 18, 24, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _ReportHeader(
+            title: 'Reporte de propinas',
+            subtitle: 'Propinas del periodo seleccionado',
+            onExportCsv: () => _exportTipsCsv(),
+            onExportPdf: () => _exportTipsReportPdf(),
+          ),
+          const SizedBox(height: 13),
+          _TipsFiltersRow(state: state),
+          const SizedBox(height: 13),
+          Expanded(child: _buildPropinasBody(state, initialLoad)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPropinasBody(TipsReportState state, bool initialLoad) {
+    return _buildLiveReportBody(
+      initialLoad: initialLoad,
+      hasQueried: state.hasQueried,
+      error: state.error,
+      hasData: state.rows != null,
+      loadingData: state.loadingData,
+      buildView: () => buildTipsReportView(state),
+    );
+  }
+
+  /// Unlike the other reports' CSV export, `reports/tips-export` is never
+  /// paginated and already backs the on-screen table, so this reuses
+  /// `state.rows` directly instead of issuing a second `allRecords: true`
+  /// request for the same data.
+  Future<void> _exportTipsCsv() async {
+    final state = ref.read(tipsReportControllerProvider);
+    if (!state.hasQueried) {
+      throw Exception('Primero consulta el reporte.');
+    }
+    final csv = tipsToCsv(state.rows ?? const []);
+    final today = DateTime.now();
+    final stamp =
+        '${today.year}${today.month.toString().padLeft(2, '0')}${today.day.toString().padLeft(2, '0')}';
+    downloadTextFile('reporte-propinas-$stamp.csv', csv);
+  }
+
+  /// Unlike the other reports' PDF export, this keeps the detail table
+  /// (doesn't strip `headers`/`rows`) since there are no KPI cards or
+  /// charts to fall back on — the table is the entire report.
+  Future<void> _exportTipsReportPdf() async {
+    final state = ref.read(tipsReportControllerProvider);
+    if (state.rows == null) {
+      throw Exception('Primero consulta el reporte.');
+    }
+    final view = buildTipsReportView(state);
+    final bytes = await buildReportPdfBytes(view);
+    final today = DateTime.now();
+    final stamp =
+        '${today.year}${today.month.toString().padLeft(2, '0')}${today.day.toString().padLeft(2, '0')}';
+    downloadBytesFile('reporte-propinas-$stamp.pdf', bytes, mimeType: 'application/pdf');
   }
 
   // ===========================================================================
@@ -1065,6 +1150,70 @@ class _CategoryFiltersRow extends ConsumerWidget {
               state.categories.firstWhere((c) => c.prodcId == id).prodcName,
           selected: state.selectedProdcIds,
           onApply: notifier.applyProdcIds,
+        ),
+        _ConsultarButton(
+          loading: state.loadingData,
+          onPressed: state.premises.isEmpty
+              ? null
+              : () {
+                  if (state.selectedPremIds.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Selecciona al menos una sucursal para consultar.'),
+                      ),
+                    );
+                    return;
+                  }
+                  notifier.search();
+                },
+        ),
+      ],
+    );
+  }
+}
+
+// ===========================================================================
+// Reporte de propinas filters: date range + sucursal + empleado
+// multi-selects + order-id search (no tipo de pedido/categoría — those
+// don't apply to a per-order propinas dump).
+// ===========================================================================
+
+class _TipsFiltersRow extends ConsumerWidget {
+  final TipsReportState state;
+  const _TipsFiltersRow({required this.state});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final notifier = ref.read(tipsReportControllerProvider.notifier);
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        _DateRangeFilterChip(
+          start: state.dateStart,
+          end: state.dateEnd,
+          onApply: notifier.applyDateRange,
+        ),
+        _MultiSelectFilterChip<int>(
+          label: 'Sucursal',
+          items: state.premises.map((p) => p.premId).toList(),
+          labelOf: (id) =>
+              state.premises.firstWhere((p) => p.premId == id).premName,
+          selected: state.selectedPremIds,
+          onApply: notifier.applyPremises,
+        ),
+        _MultiSelectFilterChip<int>(
+          label: 'Empleado',
+          items: state.employees.map((e) => e.emplId).toList(),
+          labelOf: (id) =>
+              state.employees.firstWhere((e) => e.emplId == id).emplName,
+          selected: state.selectedEmplIds,
+          onApply: notifier.applyEmplIds,
+        ),
+        _OrderIdSearchBox(
+          initialText: state.orderIdText,
+          onChanged: notifier.applyOrderIdText,
         ),
         _ConsultarButton(
           loading: state.loadingData,

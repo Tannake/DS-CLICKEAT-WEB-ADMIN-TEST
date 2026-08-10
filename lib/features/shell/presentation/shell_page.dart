@@ -50,6 +50,7 @@ const _sections = [
   _MenuSection('Negocio', [
     _MenuItem(Icons.store_outlined, 'Sucursales', '/app/branches'),
     _MenuItem(Icons.print_outlined, 'Impresoras', '/app/printers'),
+    _MenuItem(Icons.badge_outlined, 'Personal y Accesos', '/app/staff'),
   ]),
   _MenuSection('Reportes', [
     _MenuItem(Icons.bar_chart_outlined, 'Dashboard diario',
@@ -60,6 +61,8 @@ const _sections = [
         '/app/reports/productos'),
     _MenuItem(Icons.category_outlined, 'Categorías',
         '/app/reports/categorias'),
+    _MenuItem(Icons.volunteer_activism_outlined, 'Propinas',
+        '/app/reports/propinas'),
   ]),
 ];
 

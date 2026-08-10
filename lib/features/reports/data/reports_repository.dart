@@ -8,6 +8,7 @@ import 'package:ds_clickeat_web_admin/features/reports/models/report_orders.dart
 import 'package:ds_clickeat_web_admin/features/reports/models/report_pagination.dart';
 import 'package:ds_clickeat_web_admin/features/reports/models/report_product.dart';
 import 'package:ds_clickeat_web_admin/features/reports/models/report_sales.dart';
+import 'package:ds_clickeat_web_admin/features/reports/models/report_tips.dart';
 
 final reportsRepositoryProvider = Provider<ReportsRepository>((ref) {
   return ReportsRepository(ref.read(dioProvider));
@@ -495,6 +496,49 @@ class ReportsRepository {
       );
     }
     return const PagedRows(rows: [], pagination: null);
+  }
+
+  /// GET `reports/parameter/employee/<userId>` — the "Empleado" filter
+  /// options for the propinas report.
+  Future<List<EmployeeOption>> getEmployeeParam(int userId) async {
+    final res = await _dio.get('reports/parameter/employee/$userId');
+    final data = res.data;
+    if (data is Map && data['state'] == 1 && data['result'] is List) {
+      return (data['result'] as List)
+          .map((e) => EmployeeOption.fromJson(Map<String, dynamic>.from(e as Map)))
+          .toList();
+    }
+    return const [];
+  }
+
+  /// GET `reports/tips-export` — the "Reporte de propinas" data. Unlike
+  /// every other report, this endpoint IS the report: there's no separate
+  /// KPI/chart-shaped `reports/tips` endpoint, and the response is never
+  /// paginated (no `all_records`/`page` params, no `pagination` block —
+  /// always the full matching row set). `date_start`/`date_end` are the only
+  /// non-optional filters (formatted `yyyy-MM-dd`), mirroring the other
+  /// report endpoints' omit-when-empty rule for the rest.
+  Future<List<TipsCsvRow>> getTipsExport({
+    required List<int> premIds,
+    required List<int> emplIds,
+    required int? ordeId,
+    required String dateStart,
+    required String dateEnd,
+  }) async {
+    final res = await _dio.get('reports/tips-export', queryParameters: {
+      if (premIds.isNotEmpty) 'prem_id': premIds,
+      if (emplIds.isNotEmpty) 'empl_id': emplIds,
+      'orde_id': ?ordeId,
+      'date_start': dateStart,
+      'date_end': dateEnd,
+    });
+    final data = res.data;
+    if (data is Map && data['state'] == 1 && data['result'] is List) {
+      return (data['result'] as List)
+          .map((e) => TipsCsvRow.fromJson(Map<String, dynamic>.from(e as Map)))
+          .toList();
+    }
+    return const [];
   }
 
   Map<String, dynamic> _reportFilterQuery({

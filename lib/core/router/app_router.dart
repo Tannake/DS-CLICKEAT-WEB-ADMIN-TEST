@@ -11,6 +11,7 @@ import 'package:ds_clickeat_web_admin/features/cobros/presentation/cobros_page.d
 import 'package:ds_clickeat_web_admin/features/reasons/presentation/reasons_page.dart';
 import 'package:ds_clickeat_web_admin/features/branches/presentation/branches_page.dart';
 import 'package:ds_clickeat_web_admin/features/printers/presentation/printers_page.dart';
+import 'package:ds_clickeat_web_admin/features/staff/presentation/staff_page.dart';
 import 'package:ds_clickeat_web_admin/features/reports/presentation/reports_page.dart';
 
 final router = GoRouter(
@@ -60,6 +61,10 @@ final router = GoRouter(
           builder: (context, state) => const PrintersPage(),
         ),
         GoRoute(
+          path: '/app/staff',
+          builder: (context, state) => const StaffPage(),
+        ),
+        GoRoute(
           path: '/app/reports/dashboard',
           builder: (context, state) =>
               const ReportsPage(type: ReportType.dashboard),
@@ -83,6 +88,11 @@ final router = GoRouter(
           path: '/app/reports/categorias',
           builder: (context, state) =>
               const ReportsPage(type: ReportType.categorias),
+        ),
+        GoRoute(
+          path: '/app/reports/propinas',
+          builder: (context, state) =>
+              const ReportsPage(type: ReportType.propinas),
         ),
       ],
     ),
