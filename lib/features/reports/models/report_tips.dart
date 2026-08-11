@@ -28,6 +28,7 @@ class TipsCsvRow {
   final String ordeTotal;
   final num tipsPercentage;
   final String ordeTotalTips;
+  final String totalTips;
   final String ordeType;
   final String dateserverCreated;
 
@@ -39,6 +40,7 @@ class TipsCsvRow {
     required this.ordeTotal,
     required this.tipsPercentage,
     required this.ordeTotalTips,
+    required this.totalTips,
     required this.ordeType,
     required this.dateserverCreated,
   });
@@ -52,6 +54,7 @@ class TipsCsvRow {
       ordeTotal: (json['orde_total'] ?? '0').toString(),
       tipsPercentage: (json['tips_percentage'] as num?) ?? 0,
       ordeTotalTips: (json['orde_total_tips'] ?? '0').toString(),
+      totalTips: (json['total_tips'] ?? '0').toString(),
       ordeType: (json['orde_type'] ?? '') as String,
       dateserverCreated: (json['dateserver_created'] ?? '') as String,
     );

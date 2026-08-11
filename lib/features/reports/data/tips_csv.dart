@@ -10,6 +10,7 @@ String tipsToCsv(List<TipsCsvRow> rows) {
     'Total',
     '% Propina',
     'Total con propina',
+    'Propina',
     'Tipo',
     'Fecha',
   ];
@@ -25,6 +26,7 @@ String tipsToCsv(List<TipsCsvRow> rows) {
       r.ordeTotal,
       '${r.tipsPercentage}',
       r.ordeTotalTips,
+      r.totalTips,
       r.ordeType,
       r.dateserverCreated,
     ]);
