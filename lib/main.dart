@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 
 import 'package:ds_clickeat_web_admin/core/errors/error_logger.dart';
 import 'package:ds_clickeat_web_admin/core/theme/app_theme.dart';
@@ -15,6 +16,8 @@ import 'package:ds_clickeat_web_admin/features/auth/controllers/session_controll
 final _container = ProviderContainer();
 
 void main() {
+  usePathUrlStrategy();
+
   String? currentToken() =>
       _container.read(sessionControllerProvider)?.accessToken;
 
