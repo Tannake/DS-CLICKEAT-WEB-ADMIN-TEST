@@ -68,9 +68,18 @@ ReportView buildTipsReportView(TipsReportState state) {
   );
 }
 
-/// Formats a `reports/tips-export` money field ("903.00") the same way the
-/// other reports' detail tables do.
-String _moneyStr(String raw) => '\$${_grouped((num.tryParse(raw) ?? 0).round())}';
+/// Formats a `reports/tips-export` money field ("903.50") keeping the
+/// backend's decimals — rounding to an int here would silently drop cents.
+String _moneyStr(String raw) {
+  final n = num.tryParse(raw) ?? 0;
+  final fixed = n.toStringAsFixed(2);
+  final negative = fixed.startsWith('-');
+  final unsigned = negative ? fixed.substring(1) : fixed;
+  final dot = unsigned.indexOf('.');
+  final intPart = _grouped(int.parse(unsigned.substring(0, dot)));
+  final decPart = unsigned.substring(dot + 1);
+  return '\$${negative ? '-' : ''}$intPart.$decPart';
+}
 
 String _grouped(int n) {
   final s = n.abs().toString();
