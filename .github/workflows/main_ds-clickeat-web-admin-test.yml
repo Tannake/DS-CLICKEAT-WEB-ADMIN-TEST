@@ -1,7 +1,7 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: Build and deploy Node.js app to Azure Web App - DS-CLICKEAT-WEB-ADMIN-TEST
+name: Build and deploy Flutter web app to Azure Web App - DS-CLICKEAT-WEB-ADMIN-TEST
 
 on:
   push:
@@ -18,22 +18,54 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Node.js version
-        uses: actions/setup-node@v3
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
         with:
-          node-version: '24.x'
+          channel: stable
 
-      - name: npm install, build, and test
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build web
+        run: flutter build web --release --dart-define=API_BASE_URL=https://ws.test.ds-clickeat.com.mx/api/admin/
+
+      - name: Add static server for Azure App Service
         run: |
-          npm install
-          npm run build --if-present
-          npm run test --if-present
+          cat > build/web/package.json <<'EOF'
+          {
+            "name": "ds-clickeat-web-admin",
+            "version": "1.0.0",
+            "private": true,
+            "scripts": {
+              "start": "node server.js"
+            },
+            "dependencies": {
+              "express": "^4.19.2"
+            }
+          }
+          EOF
+          cat > build/web/server.js <<'EOF'
+          const express = require('express');
+          const path = require('path');
+
+          const app = express();
+          const port = process.env.PORT || 8080;
+
+          app.use(express.static(__dirname));
+          app.get('*', (req, res) => {
+            res.sendFile(path.join(__dirname, 'index.html'));
+          });
+
+          app.listen(port, () => {
+            console.log(`Server running on port ${port}`);
+          });
+          EOF
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
-          name: node-app
-          path: .
+          name: web-app
+          path: build/web
 
   deploy:
     runs-on: ubuntu-latest
@@ -46,8 +78,8 @@ jobs:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: node-app
-      
+          name: web-app
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -62,4 +94,3 @@ jobs:
           app-name: 'DS-CLICKEAT-WEB-ADMIN-TEST'
           slot-name: 'Production'
           package: .
-          
