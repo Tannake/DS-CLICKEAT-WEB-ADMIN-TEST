@@ -133,7 +133,17 @@ class _StaffPageState extends ConsumerState<StaffPage> {
     final error = await ref
         .read(rolesControllerProvider.notifier)
         .createRole(premId, name: result.name);
-    if (error != null) _toast(error);
+    if (error != null) {
+      _toast(error);
+      return;
+    }
+    // The backend seeds `role_module` rows for a newly created role, but
+    // `createRole` only reloads the `roles` controller — without this, the
+    // new role shows up with every screen toggled off (stale/missing local
+    // state, not the real backend state) until the next full page load,
+    // and activating one hits a duplicate-key error since the row already
+    // exists server-side.
+    ref.read(roleModulesControllerProvider.notifier).load(premId);
   }
 
   Future<void> _editRole(int premId, Role role) async {
@@ -253,7 +263,7 @@ class _StaffPageState extends ConsumerState<StaffPage> {
 
   // ===========================================================================
   // Permissions ("Accesos por rol") section — a role x screen matrix, one
-  // switch per cell. Assigning a module posts `rmod_type: 'I'`, unassigning
+  // switch per cell. Assigning a module posts `role_type: 'I'`, unassigning
   // posts `'D'` — no editor dialog, the switch itself is the whole flow.
   // ===========================================================================
 

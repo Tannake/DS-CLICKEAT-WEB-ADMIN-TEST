@@ -39,7 +39,7 @@ class RoleModulesRepository {
   }
 
   // ===== Role<->module CRUD (premises/role-module-crud) =======================
-  // `rmod_type` flags the operation: only I (assign) and D (unassign) — no
+  // `role_type` flags the operation: only I (assign) and D (unassign) — no
   // update, since "editing" an assignment doesn't mean anything.
 
   Future<void> assignModule({
@@ -51,7 +51,7 @@ class RoleModulesRepository {
       'prem_id': premId,
       'role_id': roleId,
       'sysm_id': sysmId,
-      'rmod_type': 'I',
+      'role_type': 'I',
     });
   }
 
@@ -64,7 +64,7 @@ class RoleModulesRepository {
       'prem_id': premId,
       'role_id': roleId,
       'sysm_id': sysmId,
-      'rmod_type': 'D',
+      'role_type': 'D',
     });
   }
 
