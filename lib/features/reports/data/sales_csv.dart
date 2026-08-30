@@ -13,6 +13,7 @@ String salesToCsv(List<SalesCsvRow> rows) {
     'Método de pago',
     'Propina %',
     'Motivo de cancelación',
+    'Empleado',
     'Fecha',
   ];
 
@@ -30,6 +31,7 @@ String salesToCsv(List<SalesCsvRow> rows) {
       r.paymName,
       '${r.tipsPercentage}',
       r.reasName,
+      r.emplName,
       r.dateserverCreated,
     ]);
   }

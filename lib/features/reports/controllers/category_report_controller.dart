@@ -4,6 +4,7 @@ import 'package:ds_clickeat_web_admin/features/auth/controllers/session_controll
 import 'package:ds_clickeat_web_admin/features/reports/data/reports_repository.dart';
 import 'package:ds_clickeat_web_admin/features/reports/models/report_category.dart';
 import 'package:ds_clickeat_web_admin/features/reports/models/report_daily.dart';
+import 'package:ds_clickeat_web_admin/features/reports/models/report_employee_summary.dart';
 import 'package:ds_clickeat_web_admin/features/reports/models/report_pagination.dart';
 import 'package:ds_clickeat_web_admin/features/reports/models/report_product.dart';
 import 'package:ds_clickeat_web_admin/features/reports/models/report_sales.dart';
@@ -17,12 +18,14 @@ class CategoryReportState {
   final List<PremiseOption> premises;
   final List<OrderTypeOption> orderTypes;
   final List<ProductCategoryParamOption> categories;
+  final List<EmployeeOption> employees;
 
   // Empty selection means "no filter" (sent to the backend as
   // omitted/null, matching every record) — every set starts empty.
   final Set<int> selectedPremIds;
   final Set<String> selectedOrderTypes;
   final Set<int> selectedProdcIds;
+  final Set<int> selectedEmplIds;
   final DateTime dateStart;
   final DateTime dateEnd;
 
@@ -48,9 +51,11 @@ class CategoryReportState {
     this.premises = const [],
     this.orderTypes = const [],
     this.categories = const [],
+    this.employees = const [],
     this.selectedPremIds = const {},
     this.selectedOrderTypes = const {},
     this.selectedProdcIds = const {},
+    this.selectedEmplIds = const {},
     required this.dateStart,
     required this.dateEnd,
     this.data,
@@ -69,9 +74,11 @@ class CategoryReportState {
     List<PremiseOption>? premises,
     List<OrderTypeOption>? orderTypes,
     List<ProductCategoryParamOption>? categories,
+    List<EmployeeOption>? employees,
     Set<int>? selectedPremIds,
     Set<String>? selectedOrderTypes,
     Set<int>? selectedProdcIds,
+    Set<int>? selectedEmplIds,
     DateTime? dateStart,
     DateTime? dateEnd,
     CategoryReportData? data,
@@ -89,9 +96,11 @@ class CategoryReportState {
       premises: premises ?? this.premises,
       orderTypes: orderTypes ?? this.orderTypes,
       categories: categories ?? this.categories,
+      employees: employees ?? this.employees,
       selectedPremIds: selectedPremIds ?? this.selectedPremIds,
       selectedOrderTypes: selectedOrderTypes ?? this.selectedOrderTypes,
       selectedProdcIds: selectedProdcIds ?? this.selectedProdcIds,
+      selectedEmplIds: selectedEmplIds ?? this.selectedEmplIds,
       dateStart: dateStart ?? this.dateStart,
       dateEnd: dateEnd ?? this.dateEnd,
       data: data ?? this.data,
@@ -123,10 +132,10 @@ class CategoryReportController extends StateNotifier<CategoryReportState> {
   int _loadToken = 0;
   int _tableLoadToken = 0;
 
-  /// Loads the three fetched filter parameter sources (premises, order
-  /// types, categories) but does NOT fetch the report — the user must press
-  /// "Consultar" ([search]) first. Safe to call more than once; no-ops once
-  /// already loaded.
+  /// Loads the four fetched filter parameter sources (premises, order
+  /// types, categories, employees) but does NOT fetch the report — the user
+  /// must press "Consultar" ([search]) first. Safe to call more than once;
+  /// no-ops once already loaded.
   Future<void> loadParameters() async {
     if (state.premises.isNotEmpty || state.loadingParams) return;
     final session = _ref.read(sessionControllerProvider);
@@ -139,11 +148,13 @@ class CategoryReportController extends StateNotifier<CategoryReportState> {
         repo.getPremisesParam(session.userId),
         repo.getOrderTypes(),
         repo.getProductCategoryParam(session.userId),
+        repo.getEmployeeParam(session.userId),
       ]);
       state = state.copyWith(
         premises: results[0] as List<PremiseOption>,
         orderTypes: results[1] as List<OrderTypeOption>,
         categories: results[2] as List<ProductCategoryParamOption>,
+        employees: results[3] as List<EmployeeOption>,
         loadingParams: false,
       );
     } catch (e) {
@@ -156,6 +167,7 @@ class CategoryReportController extends StateNotifier<CategoryReportState> {
   void applyPremises(Set<int> ids) => state = state.copyWith(selectedPremIds: ids);
   void applyOrderTypes(Set<String> types) => state = state.copyWith(selectedOrderTypes: types);
   void applyProdcIds(Set<int> ids) => state = state.copyWith(selectedProdcIds: ids);
+  void applyEmplIds(Set<int> ids) => state = state.copyWith(selectedEmplIds: ids);
   void applyDateRange(DateTime start, DateTime end) =>
       state = state.copyWith(dateStart: start, dateEnd: end);
 
@@ -175,6 +187,7 @@ class CategoryReportController extends StateNotifier<CategoryReportState> {
           premIds: state.selectedPremIds.toList(),
           ordeTypes: state.selectedOrderTypes.toList(),
           prodcIds: state.selectedProdcIds.toList(),
+          emplIds: state.selectedEmplIds.toList(),
           dateStart: _fmtDate(state.dateStart),
           dateEnd: _fmtDate(state.dateEnd),
         ),
@@ -182,6 +195,7 @@ class CategoryReportController extends StateNotifier<CategoryReportState> {
           premIds: state.selectedPremIds.toList(),
           ordeTypes: state.selectedOrderTypes.toList(),
           prodcIds: state.selectedProdcIds.toList(),
+          emplIds: state.selectedEmplIds.toList(),
           dateStart: _fmtDate(state.dateStart),
           dateEnd: _fmtDate(state.dateEnd),
         ),
@@ -215,6 +229,7 @@ class CategoryReportController extends StateNotifier<CategoryReportState> {
             premIds: state.selectedPremIds.toList(),
             ordeTypes: state.selectedOrderTypes.toList(),
             prodcIds: state.selectedProdcIds.toList(),
+            emplIds: state.selectedEmplIds.toList(),
             dateStart: _fmtDate(state.dateStart),
             dateEnd: _fmtDate(state.dateEnd),
             page: page,

@@ -84,6 +84,15 @@ ReportView buildOrdersReportView(OrdersReportState state) {
           selected: state.selectedReasIds,
         ),
       ),
+      ReportFilter(
+        'Empleado',
+        ReportFilter.summarize(
+          items: state.employees.map((e) => e.emplId).toList(),
+          labelOf: (id) =>
+              state.employees.firstWhere((e) => e.emplId == id).emplName,
+          selected: state.selectedEmplIds,
+        ),
+      ),
       if (state.orderIdText.trim().isNotEmpty)
         ReportFilter('N° de pedido', state.orderIdText.trim()),
     ],
@@ -170,6 +179,7 @@ ReportView buildOrdersReportView(OrdersReportState state) {
       ReportTableHeader('Estado'),
       ReportTableHeader('Tipo'),
       ReportTableHeader('Sucursal'),
+      ReportTableHeader('Empleado'),
       ReportTableHeader('Fecha', alignRight: true),
     ],
     rows: [
@@ -190,6 +200,7 @@ ReportView buildOrdersReportView(OrdersReportState state) {
           stateBadge(o.ordeState),
           ReportCell.dot(o.ordeType, color: channelColor(o.ordeType)),
           ReportCell.plain(o.premName),
+          ReportCell.plain(o.emplName.isEmpty ? '—' : o.emplName),
           ReportCell.plain(_shortDate(o.dateserverCreated), alignRight: true),
         ]),
     ],

@@ -79,6 +79,7 @@ class ProductCsvRow {
   final int prodQuantity;
   final String prodPriceUnitary;
   final String prodTotal;
+  final String emplName;
 
   const ProductCsvRow({
     required this.premName,
@@ -89,6 +90,7 @@ class ProductCsvRow {
     required this.prodQuantity,
     required this.prodPriceUnitary,
     required this.prodTotal,
+    required this.emplName,
   });
 
   factory ProductCsvRow.fromJson(Map<String, dynamic> json) {
@@ -101,6 +103,7 @@ class ProductCsvRow {
       prodQuantity: (json['prod_quantity'] as num?)?.toInt() ?? 0,
       prodPriceUnitary: (json['prod_price_unitary'] ?? '0').toString(),
       prodTotal: (json['prod_total'] ?? '0').toString(),
+      emplName: (json['empl_name'] ?? '') as String,
     );
   }
 }

@@ -11,6 +11,7 @@ String productsToCsv(List<ProductCsvRow> rows) {
     'Opción',
     'Cantidad',
     'Total',
+    'Empleado',
   ];
 
   final csvRows = <List<String>>[headers];
@@ -24,6 +25,7 @@ String productsToCsv(List<ProductCsvRow> rows) {
       r.prodoName,
       '${r.prodQuantity}',
       r.prodTotal,
+      r.emplName,
     ]);
   }
 

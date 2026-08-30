@@ -28,6 +28,7 @@ class CategoryCsvRow {
   final int prodQuantity;
   final String prodTotal;
   final int prodSold;
+  final String emplName;
 
   const CategoryCsvRow({
     required this.premName,
@@ -35,6 +36,7 @@ class CategoryCsvRow {
     required this.prodQuantity,
     required this.prodTotal,
     required this.prodSold,
+    required this.emplName,
   });
 
   factory CategoryCsvRow.fromJson(Map<String, dynamic> json) {
@@ -44,6 +46,7 @@ class CategoryCsvRow {
       prodQuantity: (json['prod_quantity'] as num?)?.toInt() ?? 0,
       prodTotal: (json['prod_total'] ?? '0').toString(),
       prodSold: (json['prod_sold'] as num?)?.toInt() ?? 0,
+      emplName: (json['empl_name'] ?? '') as String,
     );
   }
 }

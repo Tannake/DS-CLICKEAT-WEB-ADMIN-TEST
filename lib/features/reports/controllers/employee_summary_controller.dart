@@ -3,14 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ds_clickeat_web_admin/features/auth/controllers/session_controller.dart';
 import 'package:ds_clickeat_web_admin/features/reports/data/reports_repository.dart';
 import 'package:ds_clickeat_web_admin/features/reports/models/report_sales.dart' show PremiseOption;
-import 'package:ds_clickeat_web_admin/features/reports/models/report_tips.dart';
+import 'package:ds_clickeat_web_admin/features/reports/models/report_employee_summary.dart';
 
 /// Simpler filter-staging/`search()`-on-demand shape than the other reports'
-/// controllers: `reports/tips-export` IS the report (no separate
+/// controllers: `orders/employee-summary` IS the report (no separate
 /// KPI/chart-shaped endpoint and no server pagination), so there's no
 /// `data`/detail-table split and no `goToTablePage` — [rows] is loaded once
 /// per [search] and rendered in full.
-class TipsReportState {
+class EmployeeSummaryState {
   final List<PremiseOption> premises;
   final List<EmployeeOption> employees;
 
@@ -18,7 +18,6 @@ class TipsReportState {
   // omitted/null, matching every record) — every set starts empty.
   final Set<int> selectedPremIds;
   final Set<int> selectedEmplIds;
-  final String orderIdText;
   final DateTime dateStart;
   final DateTime dateEnd;
 
@@ -27,18 +26,17 @@ class TipsReportState {
   // legitimately-empty result doesn't re-trigger the full-page "initial
   // load" spinner (see `_buildLiveReportBody`'s `initialLoad` in
   // reports_page.dart) on a later search.
-  final List<TipsCsvRow>? rows;
+  final List<EmployeeSummaryRow>? rows;
   final bool loadingParams;
   final bool loadingData;
   final bool hasQueried;
   final String? error;
 
-  const TipsReportState({
+  const EmployeeSummaryState({
     this.premises = const [],
     this.employees = const [],
     this.selectedPremIds = const {},
     this.selectedEmplIds = const {},
-    this.orderIdText = '',
     required this.dateStart,
     required this.dateEnd,
     this.rows,
@@ -48,26 +46,24 @@ class TipsReportState {
     this.error,
   });
 
-  TipsReportState copyWith({
+  EmployeeSummaryState copyWith({
     List<PremiseOption>? premises,
     List<EmployeeOption>? employees,
     Set<int>? selectedPremIds,
     Set<int>? selectedEmplIds,
-    String? orderIdText,
     DateTime? dateStart,
     DateTime? dateEnd,
-    List<TipsCsvRow>? rows,
+    List<EmployeeSummaryRow>? rows,
     bool? loadingParams,
     bool? loadingData,
     bool? hasQueried,
     String? error,
   }) {
-    return TipsReportState(
+    return EmployeeSummaryState(
       premises: premises ?? this.premises,
       employees: employees ?? this.employees,
       selectedPremIds: selectedPremIds ?? this.selectedPremIds,
       selectedEmplIds: selectedEmplIds ?? this.selectedEmplIds,
-      orderIdText: orderIdText ?? this.orderIdText,
       dateStart: dateStart ?? this.dateStart,
       dateEnd: dateEnd ?? this.dateEnd,
       rows: rows ?? this.rows,
@@ -79,14 +75,14 @@ class TipsReportState {
   }
 }
 
-final tipsReportControllerProvider =
-    StateNotifierProvider<TipsReportController, TipsReportState>((ref) {
-  return TipsReportController(ref);
+final employeeSummaryControllerProvider =
+    StateNotifierProvider<EmployeeSummaryController, EmployeeSummaryState>((ref) {
+  return EmployeeSummaryController(ref);
 });
 
-class TipsReportController extends StateNotifier<TipsReportState> {
-  TipsReportController(this._ref)
-      : super(TipsReportState(
+class EmployeeSummaryController extends StateNotifier<EmployeeSummaryState> {
+  EmployeeSummaryController(this._ref)
+      : super(EmployeeSummaryState(
           dateStart: DateTime.now(),
           dateEnd: DateTime.now(),
         ));
@@ -123,7 +119,6 @@ class TipsReportController extends StateNotifier<TipsReportState> {
   // the user presses "Consultar" ([search]).
   void applyPremises(Set<int> ids) => state = state.copyWith(selectedPremIds: ids);
   void applyEmplIds(Set<int> ids) => state = state.copyWith(selectedEmplIds: ids);
-  void applyOrderIdText(String text) => state = state.copyWith(orderIdText: text);
   void applyDateRange(DateTime start, DateTime end) =>
       state = state.copyWith(dateStart: start, dateEnd: end);
 
@@ -137,10 +132,9 @@ class TipsReportController extends StateNotifier<TipsReportState> {
     final token = ++_loadToken;
     state = state.copyWith(loadingData: true, error: null);
     try {
-      final rows = await _ref.read(reportsRepositoryProvider).getTipsExport(
+      final rows = await _ref.read(reportsRepositoryProvider).getEmployeeSummary(
             premIds: state.selectedPremIds.toList(),
             emplIds: state.selectedEmplIds.toList(),
-            ordeId: int.tryParse(state.orderIdText.trim()),
             dateStart: _fmtDate(state.dateStart),
             dateEnd: _fmtDate(state.dateEnd),
           );

@@ -85,6 +85,15 @@ ReportView buildProductReportView(ProductReportState state) {
           selected: state.selectedProdoIds,
         ),
       ),
+      ReportFilter(
+        'Empleado',
+        ReportFilter.summarize(
+          items: state.employees.map((e) => e.emplId).toList(),
+          labelOf: (id) =>
+              state.employees.firstWhere((e) => e.emplId == id).emplName,
+          selected: state.selectedEmplIds,
+        ),
+      ),
     ],
     kpis: [
       ReportKpi(
@@ -171,6 +180,7 @@ ReportView buildProductReportView(ProductReportState state) {
       ReportTableHeader('Cantidad', alignRight: true),
       ReportTableHeader('Total', alignRight: true),
       ReportTableHeader('Sucursal'),
+      ReportTableHeader('Empleado'),
     ],
     rows: [
       for (final p in state.productRows)
@@ -182,6 +192,7 @@ ReportView buildProductReportView(ProductReportState state) {
           ReportCell.plain('${p.prodQuantity}', alignRight: true),
           ReportCell.plain(_moneyStr(p.prodTotal), bold: true, alignRight: true),
           ReportCell.plain(p.premName),
+          ReportCell.plain(p.emplName.isEmpty ? '—' : p.emplName),
         ]),
     ],
   );

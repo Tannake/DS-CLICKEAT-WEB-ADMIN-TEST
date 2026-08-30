@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// The report screens available under the "Reportes" menu section.
-enum ReportType { dashboard, ventas, pedidos, productos, categorias, propinas }
+enum ReportType { dashboard, ventas, pedidos, productos, categorias, employeeSummary }
 
 class ReportFilter {
   final String label;

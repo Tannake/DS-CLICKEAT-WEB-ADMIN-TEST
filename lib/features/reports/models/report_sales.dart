@@ -15,6 +15,7 @@ class SalesCsvRow {
   final String paymName;
   final num tipsPercentage;
   final String reasName;
+  final String emplName;
   final String dateserverCreated;
 
   const SalesCsvRow({
@@ -29,6 +30,7 @@ class SalesCsvRow {
     required this.paymName,
     required this.tipsPercentage,
     required this.reasName,
+    required this.emplName,
     required this.dateserverCreated,
   });
 
@@ -45,6 +47,7 @@ class SalesCsvRow {
       paymName: (json['paym_name'] ?? '') as String,
       tipsPercentage: (json['tips_percentage'] as num?) ?? 0,
       reasName: (json['reas_name'] ?? '') as String,
+      emplName: (json['empl_name'] ?? '') as String,
       dateserverCreated: (json['dateserver_created'] ?? '') as String,
     );
   }

@@ -81,6 +81,15 @@ ReportView buildSalesReportView(SalesReportState state) {
           selected: state.selectedReasIds,
         ),
       ),
+      ReportFilter(
+        'Empleado',
+        ReportFilter.summarize(
+          items: state.employees.map((e) => e.emplId).toList(),
+          labelOf: (id) =>
+              state.employees.firstWhere((e) => e.emplId == id).emplName,
+          selected: state.selectedEmplIds,
+        ),
+      ),
       if (state.orderIdText.trim().isNotEmpty)
         ReportFilter('N° de pedido', state.orderIdText.trim()),
     ],
@@ -163,6 +172,7 @@ ReportView buildSalesReportView(SalesReportState state) {
       ReportTableHeader('Tipo'),
       ReportTableHeader('Estado'),
       ReportTableHeader('Sucursal'),
+      ReportTableHeader('Empleado'),
       ReportTableHeader('Fecha', alignRight: true),
     ],
     rows: [
@@ -176,6 +186,7 @@ ReportView buildSalesReportView(SalesReportState state) {
           ReportCell.dot(o.ordeType, color: channelColor(o.ordeType)),
           stateBadge(o.ordeState),
           ReportCell.plain(o.premName),
+          ReportCell.plain(o.emplName.isEmpty ? '—' : o.emplName),
           ReportCell.plain(_shortDateTime(o.dateserverCreated), alignRight: true),
         ]),
     ],

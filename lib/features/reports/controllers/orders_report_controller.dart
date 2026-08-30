@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ds_clickeat_web_admin/features/auth/controllers/session_controller.dart';
 import 'package:ds_clickeat_web_admin/features/reports/data/reports_repository.dart';
 import 'package:ds_clickeat_web_admin/features/reports/models/report_daily.dart';
+import 'package:ds_clickeat_web_admin/features/reports/models/report_employee_summary.dart';
 import 'package:ds_clickeat_web_admin/features/reports/models/report_orders.dart';
 import 'package:ds_clickeat_web_admin/features/reports/models/report_pagination.dart';
 import 'package:ds_clickeat_web_admin/features/reports/models/report_sales.dart';
@@ -18,6 +19,7 @@ class OrdersReportState {
   final List<PaymentOption> payments;
   final List<OrderStateOption> orderStates;
   final List<ReasonOption> reasons;
+  final List<EmployeeOption> employees;
 
   // Empty selection means "no filter" (sent to the backend as
   // omitted/null, matching every record) — every set starts empty.
@@ -26,6 +28,7 @@ class OrdersReportState {
   final Set<int> selectedPaymIds;
   final Set<String> selectedOrderStates;
   final Set<int> selectedReasIds;
+  final Set<int> selectedEmplIds;
   final String orderIdText;
   final DateTime dateStart;
   final DateTime dateEnd;
@@ -54,11 +57,13 @@ class OrdersReportState {
     this.payments = const [],
     this.orderStates = const [],
     this.reasons = const [],
+    this.employees = const [],
     this.selectedPremIds = const {},
     this.selectedOrderTypes = const {},
     this.selectedPaymIds = const {},
     this.selectedOrderStates = const {},
     this.selectedReasIds = const {},
+    this.selectedEmplIds = const {},
     this.orderIdText = '',
     required this.dateStart,
     required this.dateEnd,
@@ -80,11 +85,13 @@ class OrdersReportState {
     List<PaymentOption>? payments,
     List<OrderStateOption>? orderStates,
     List<ReasonOption>? reasons,
+    List<EmployeeOption>? employees,
     Set<int>? selectedPremIds,
     Set<String>? selectedOrderTypes,
     Set<int>? selectedPaymIds,
     Set<String>? selectedOrderStates,
     Set<int>? selectedReasIds,
+    Set<int>? selectedEmplIds,
     String? orderIdText,
     DateTime? dateStart,
     DateTime? dateEnd,
@@ -105,11 +112,13 @@ class OrdersReportState {
       payments: payments ?? this.payments,
       orderStates: orderStates ?? this.orderStates,
       reasons: reasons ?? this.reasons,
+      employees: employees ?? this.employees,
       selectedPremIds: selectedPremIds ?? this.selectedPremIds,
       selectedOrderTypes: selectedOrderTypes ?? this.selectedOrderTypes,
       selectedPaymIds: selectedPaymIds ?? this.selectedPaymIds,
       selectedOrderStates: selectedOrderStates ?? this.selectedOrderStates,
       selectedReasIds: selectedReasIds ?? this.selectedReasIds,
+      selectedEmplIds: selectedEmplIds ?? this.selectedEmplIds,
       orderIdText: orderIdText ?? this.orderIdText,
       dateStart: dateStart ?? this.dateStart,
       dateEnd: dateEnd ?? this.dateEnd,
@@ -142,10 +151,10 @@ class OrdersReportController extends StateNotifier<OrdersReportState> {
   int _loadToken = 0;
   int _tableLoadToken = 0;
 
-  /// Loads the five fetched filter parameter sources (premises, order
-  /// types, payments, order states, cancellation reasons) but does NOT
-  /// fetch the report — the user must press "Consultar" ([search]) first.
-  /// Safe to call more than once; no-ops once already loaded.
+  /// Loads the six fetched filter parameter sources (premises, order
+  /// types, payments, order states, cancellation reasons, employees) but
+  /// does NOT fetch the report — the user must press "Consultar" ([search])
+  /// first. Safe to call more than once; no-ops once already loaded.
   Future<void> loadParameters() async {
     if (state.premises.isNotEmpty || state.loadingParams) return;
     final session = _ref.read(sessionControllerProvider);
@@ -160,6 +169,7 @@ class OrdersReportController extends StateNotifier<OrdersReportState> {
         repo.getPayments(session.userId),
         repo.getOrderStates(),
         repo.getReasonCancel(session.userId),
+        repo.getEmployeeParam(session.userId),
       ]);
       state = state.copyWith(
         premises: results[0] as List<PremiseOption>,
@@ -167,6 +177,7 @@ class OrdersReportController extends StateNotifier<OrdersReportState> {
         payments: results[2] as List<PaymentOption>,
         orderStates: results[3] as List<OrderStateOption>,
         reasons: results[4] as List<ReasonOption>,
+        employees: results[5] as List<EmployeeOption>,
         loadingParams: false,
       );
     } catch (e) {
@@ -181,6 +192,7 @@ class OrdersReportController extends StateNotifier<OrdersReportState> {
   void applyPaymIds(Set<int> ids) => state = state.copyWith(selectedPaymIds: ids);
   void applyOrderStates(Set<String> states) => state = state.copyWith(selectedOrderStates: states);
   void applyReasIds(Set<int> ids) => state = state.copyWith(selectedReasIds: ids);
+  void applyEmplIds(Set<int> ids) => state = state.copyWith(selectedEmplIds: ids);
   void applyOrderIdText(String text) => state = state.copyWith(orderIdText: text);
   void applyDateRange(DateTime start, DateTime end) =>
       state = state.copyWith(dateStart: start, dateEnd: end);
@@ -205,6 +217,7 @@ class OrdersReportController extends StateNotifier<OrdersReportState> {
           ordeTypes: state.selectedOrderTypes.toList(),
           paymIds: state.selectedPaymIds.toList(),
           reasIds: state.selectedReasIds.toList(),
+          emplIds: state.selectedEmplIds.toList(),
           dateStart: _fmtDate(state.dateStart),
           dateEnd: _fmtDate(state.dateEnd),
         ),
@@ -215,6 +228,7 @@ class OrdersReportController extends StateNotifier<OrdersReportState> {
           ordeTypes: state.selectedOrderTypes.toList(),
           paymIds: state.selectedPaymIds.toList(),
           reasIds: state.selectedReasIds.toList(),
+          emplIds: state.selectedEmplIds.toList(),
           dateStart: _fmtDate(state.dateStart),
           dateEnd: _fmtDate(state.dateEnd),
         ),
@@ -250,6 +264,7 @@ class OrdersReportController extends StateNotifier<OrdersReportState> {
             ordeTypes: state.selectedOrderTypes.toList(),
             paymIds: state.selectedPaymIds.toList(),
             reasIds: state.selectedReasIds.toList(),
+            emplIds: state.selectedEmplIds.toList(),
             dateStart: _fmtDate(state.dateStart),
             dateEnd: _fmtDate(state.dateEnd),
             page: page,

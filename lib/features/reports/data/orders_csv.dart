@@ -20,6 +20,7 @@ String ordersToCsv(List<OrdersCsvRow> rows) {
     'Cantidad adicional',
     'Precio adicional',
     'Total adicional',
+    'Empleado',
   ];
 
   final csvRows = <List<String>>[headers];
@@ -42,6 +43,7 @@ String ordersToCsv(List<OrdersCsvRow> rows) {
       '${r.prodaQuantity}',
       r.prodaPrice,
       r.prodaTotal,
+      r.emplName,
     ]);
   }
 

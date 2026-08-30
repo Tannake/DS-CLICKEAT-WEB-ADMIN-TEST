@@ -1,17 +1,15 @@
-import 'package:ds_clickeat_web_admin/features/reports/models/report_tips.dart';
+import 'package:ds_clickeat_web_admin/features/reports/models/report_employee_summary.dart';
 
-/// Builds a CSV document from `reports/tips-export` rows, one row per order.
-String tipsToCsv(List<TipsCsvRow> rows) {
+/// Builds a CSV document from `orders/employee-summary` rows.
+String employeeSummaryToCsv(List<EmployeeSummaryRow> rows) {
   const headers = [
     'Sucursal',
     'Empleado',
-    'Pedido',
-    'Mesa',
+    'Estado del pedido',
+    'Método de pago',
+    'Pedidos',
     'Total',
-    '% Propina',
-    'Total con propina',
-    'Propina',
-    'Tipo',
+    'Propinas',
     'Fecha',
   ];
 
@@ -21,13 +19,11 @@ String tipsToCsv(List<TipsCsvRow> rows) {
     csvRows.add([
       r.premName,
       r.emplName,
-      '${r.ordeId}',
-      r.tablId,
+      r.ordeState,
+      r.paymName,
+      '${r.totalPedidos}',
       r.ordeTotal,
-      '${r.tipsPercentage}',
-      r.ordeTotalTips,
       r.totalTips,
-      r.ordeType,
       r.dateserverCreated,
     ]);
   }

@@ -9,6 +9,7 @@ String categoriesToCsv(List<CategoryCsvRow> rows) {
     'Cantidad',
     'Productos vendidos',
     'Total',
+    'Empleado',
   ];
 
   final csvRows = <List<String>>[headers];
@@ -20,6 +21,7 @@ String categoriesToCsv(List<CategoryCsvRow> rows) {
       '${r.prodQuantity}',
       '${r.prodSold}',
       r.prodTotal,
+      r.emplName,
     ]);
   }
 

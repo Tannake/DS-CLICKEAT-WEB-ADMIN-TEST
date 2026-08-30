@@ -90,9 +90,9 @@ final router = GoRouter(
               const ReportsPage(type: ReportType.categorias),
         ),
         GoRoute(
-          path: '/app/reports/propinas',
+          path: '/app/reports/employee-summary',
           builder: (context, state) =>
-              const ReportsPage(type: ReportType.propinas),
+              const ReportsPage(type: ReportType.employeeSummary),
         ),
       ],
     ),

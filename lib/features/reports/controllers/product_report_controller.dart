@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ds_clickeat_web_admin/features/auth/controllers/session_controller.dart';
 import 'package:ds_clickeat_web_admin/features/reports/data/reports_repository.dart';
 import 'package:ds_clickeat_web_admin/features/reports/models/report_daily.dart';
+import 'package:ds_clickeat_web_admin/features/reports/models/report_employee_summary.dart';
 import 'package:ds_clickeat_web_admin/features/reports/models/report_pagination.dart';
 import 'package:ds_clickeat_web_admin/features/reports/models/report_product.dart';
 import 'package:ds_clickeat_web_admin/features/reports/models/report_sales.dart';
@@ -19,6 +20,7 @@ class ProductReportState {
   final List<ProductCategoryParamOption> categories;
   final List<ProductSizeParamOption> sizes;
   final List<ProductOptionParamOption> options;
+  final List<EmployeeOption> employees;
 
   // Empty selection means "no filter" (sent to the backend as
   // omitted/null, matching every record) — every set starts empty.
@@ -28,6 +30,7 @@ class ProductReportState {
   final Set<int> selectedProdcIds;
   final Set<int> selectedProdsIds;
   final Set<int> selectedProdoIds;
+  final Set<int> selectedEmplIds;
   final DateTime dateStart;
   final DateTime dateEnd;
 
@@ -56,12 +59,14 @@ class ProductReportState {
     this.categories = const [],
     this.sizes = const [],
     this.options = const [],
+    this.employees = const [],
     this.selectedPremIds = const {},
     this.selectedOrderTypes = const {},
     this.selectedProdIds = const {},
     this.selectedProdcIds = const {},
     this.selectedProdsIds = const {},
     this.selectedProdoIds = const {},
+    this.selectedEmplIds = const {},
     required this.dateStart,
     required this.dateEnd,
     this.data,
@@ -83,12 +88,14 @@ class ProductReportState {
     List<ProductCategoryParamOption>? categories,
     List<ProductSizeParamOption>? sizes,
     List<ProductOptionParamOption>? options,
+    List<EmployeeOption>? employees,
     Set<int>? selectedPremIds,
     Set<String>? selectedOrderTypes,
     Set<int>? selectedProdIds,
     Set<int>? selectedProdcIds,
     Set<int>? selectedProdsIds,
     Set<int>? selectedProdoIds,
+    Set<int>? selectedEmplIds,
     DateTime? dateStart,
     DateTime? dateEnd,
     ProductReportData? data,
@@ -109,12 +116,14 @@ class ProductReportState {
       categories: categories ?? this.categories,
       sizes: sizes ?? this.sizes,
       options: options ?? this.options,
+      employees: employees ?? this.employees,
       selectedPremIds: selectedPremIds ?? this.selectedPremIds,
       selectedOrderTypes: selectedOrderTypes ?? this.selectedOrderTypes,
       selectedProdIds: selectedProdIds ?? this.selectedProdIds,
       selectedProdcIds: selectedProdcIds ?? this.selectedProdcIds,
       selectedProdsIds: selectedProdsIds ?? this.selectedProdsIds,
       selectedProdoIds: selectedProdoIds ?? this.selectedProdoIds,
+      selectedEmplIds: selectedEmplIds ?? this.selectedEmplIds,
       dateStart: dateStart ?? this.dateStart,
       dateEnd: dateEnd ?? this.dateEnd,
       data: data ?? this.data,
@@ -146,10 +155,10 @@ class ProductReportController extends StateNotifier<ProductReportState> {
   int _loadToken = 0;
   int _tableLoadToken = 0;
 
-  /// Loads the six fetched filter parameter sources (premises, order types,
-  /// products, categories, sizes, options) but does NOT fetch the report —
-  /// the user must press "Consultar" ([search]) first. Safe to call more
-  /// than once; no-ops once already loaded.
+  /// Loads the seven fetched filter parameter sources (premises, order
+  /// types, products, categories, sizes, options, employees) but does NOT
+  /// fetch the report — the user must press "Consultar" ([search]) first.
+  /// Safe to call more than once; no-ops once already loaded.
   Future<void> loadParameters() async {
     if (state.premises.isNotEmpty || state.loadingParams) return;
     final session = _ref.read(sessionControllerProvider);
@@ -165,6 +174,7 @@ class ProductReportController extends StateNotifier<ProductReportState> {
         repo.getProductCategoryParam(session.userId),
         repo.getProductSizeParam(session.userId),
         repo.getProductOptionParam(session.userId),
+        repo.getEmployeeParam(session.userId),
       ]);
       state = state.copyWith(
         premises: results[0] as List<PremiseOption>,
@@ -173,6 +183,7 @@ class ProductReportController extends StateNotifier<ProductReportState> {
         categories: results[3] as List<ProductCategoryParamOption>,
         sizes: results[4] as List<ProductSizeParamOption>,
         options: results[5] as List<ProductOptionParamOption>,
+        employees: results[6] as List<EmployeeOption>,
         loadingParams: false,
       );
     } catch (e) {
@@ -188,6 +199,7 @@ class ProductReportController extends StateNotifier<ProductReportState> {
   void applyProdcIds(Set<int> ids) => state = state.copyWith(selectedProdcIds: ids);
   void applyProdsIds(Set<int> ids) => state = state.copyWith(selectedProdsIds: ids);
   void applyProdoIds(Set<int> ids) => state = state.copyWith(selectedProdoIds: ids);
+  void applyEmplIds(Set<int> ids) => state = state.copyWith(selectedEmplIds: ids);
   void applyDateRange(DateTime start, DateTime end) =>
       state = state.copyWith(dateStart: start, dateEnd: end);
 
@@ -210,6 +222,7 @@ class ProductReportController extends StateNotifier<ProductReportState> {
           prodcIds: state.selectedProdcIds.toList(),
           prodsIds: state.selectedProdsIds.toList(),
           prodoIds: state.selectedProdoIds.toList(),
+          emplIds: state.selectedEmplIds.toList(),
           dateStart: _fmtDate(state.dateStart),
           dateEnd: _fmtDate(state.dateEnd),
         ),
@@ -220,6 +233,7 @@ class ProductReportController extends StateNotifier<ProductReportState> {
           prodcIds: state.selectedProdcIds.toList(),
           prodsIds: state.selectedProdsIds.toList(),
           prodoIds: state.selectedProdoIds.toList(),
+          emplIds: state.selectedEmplIds.toList(),
           dateStart: _fmtDate(state.dateStart),
           dateEnd: _fmtDate(state.dateEnd),
         ),
@@ -255,6 +269,7 @@ class ProductReportController extends StateNotifier<ProductReportState> {
             prodcIds: state.selectedProdcIds.toList(),
             prodsIds: state.selectedProdsIds.toList(),
             prodoIds: state.selectedProdoIds.toList(),
+            emplIds: state.selectedEmplIds.toList(),
             dateStart: _fmtDate(state.dateStart),
             dateEnd: _fmtDate(state.dateEnd),
             page: page,

@@ -61,8 +61,8 @@ const _sections = [
         '/app/reports/productos'),
     _MenuItem(Icons.category_outlined, 'Categorías',
         '/app/reports/categorias'),
-    _MenuItem(Icons.volunteer_activism_outlined, 'Propinas',
-        '/app/reports/propinas'),
+    _MenuItem(Icons.volunteer_activism_outlined, 'Resumen de Turno',
+        '/app/reports/employee-summary'),
   ]),
 ];
 
