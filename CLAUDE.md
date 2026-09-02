@@ -36,7 +36,7 @@ Feature-first layout under `lib/features/<feature>/`, each feature split into th
 - `controllers/` — `StateNotifier` + an immutable `*State` (with `copyWith`) exposed via `StateNotifierProvider`. This is the only state-management pattern in use (flutter_riverpod, no codegen).
 - `presentation/` — `ConsumerWidget` / `ConsumerStatefulWidget` screens that `ref.watch` state and `ref.read(...notifier)` to trigger actions.
 
-`lib/core/` holds cross-cutting infra: `env.dart`, `http/dio_client.dart`, `router/app_router.dart`, `theme/app_theme.dart`, `errors/error_logger.dart`, `utils/web_download.dart`, plus the responsive helpers below.
+`lib/core/` holds cross-cutting infra: `env.dart`, `http/dio_client.dart`, `router/app_router.dart`, `theme/app_theme.dart`, `utils/web_download.dart`, plus the responsive helpers below.
 
 ### Backend response envelope
 
@@ -48,10 +48,6 @@ The API wraps payloads in `{ "state": 1, "result": ... }`. Repositories check `d
 - `Session` (access token + user id/name) is persisted in `SharedPreferences` under key `clickeat.admin.session`, with no expiry check on read — `readPersistedSession()` trusts it as long as it's present. `SessionController.bootstrap()` rehydrates it on app start; `sessionControllerProvider == null` means logged out.
 - Login flow: `LoginPage` → `loginControllerProvider.login()` → `AuthRepository.login()` posts to `auth/login`, stores the session, then `SessionController.bootstrap()` reloads it before navigating to `/app/products`.
 - `ShellPage.build()` runs `ref.listen<Session?>(sessionControllerProvider, ...)` and navigates to `/login` the moment the session flips from non-null to null — this is what makes a mid-session 401 (expired token) bounce the user out instead of leaving the shell stuck rendering stale/broken data.
-
-### Error logging
-
-`ErrorLogger` (`lib/core/errors/error_logger.dart`) posts to `scrip/log-error` on a bare `Dio` with no interceptors of its own (reusing `dioProvider` would let a failed log call recurse through this same error path). It's wired in three places: `dio_client.dart`'s `onResponse` (business-logic failures — `{state: 0, ...}` responses that return HTTP 200 and never hit `onError`), the same interceptor's `onError` (transport/HTTP errors), and `main.dart`'s `FlutterError.onError`/`runZonedGuarded` (uncaught framework/Dart errors). Callers outside the interceptor (like `main.dart`) must pass the session token explicitly since they have no interceptor access to it. Logging failures are swallowed — it must never throw or mask the original error.
 
 ### Routing
 

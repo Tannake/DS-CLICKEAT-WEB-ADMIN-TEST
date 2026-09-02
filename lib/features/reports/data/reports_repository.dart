@@ -527,14 +527,20 @@ class ReportsRepository {
     return const [];
   }
 
-  /// GET `orders/employee-summary` — the "Resumen de turno" data
-  /// (`FUN_GET_EMPLOYEE_SUMMARY`). Unlike every other report, this endpoint
-  /// IS the report: there's no separate KPI/chart-shaped endpoint, and the
-  /// response is never paginated (no `all_records`/`page` params, no
-  /// `pagination` block — always the full matching row set). `date_start`/
-  /// `date_end` are the only non-optional filters (formatted `yyyy-MM-dd`),
-  /// mirroring the other report endpoints' omit-when-empty rule for the
-  /// rest.
+  /// GET `orders/employee-summary` — the "Resumen de turno" data. Backend
+  /// groups the raw rows server-side (`groupEmployeeSummary`) by `prem_name`
+  /// + `empl_name` + `dateserver_created` before responding, so `result` is
+  /// already one entry per group with a `payments` breakdown rather than one
+  /// row per payment method. Unlike every other report, this endpoint IS the
+  /// report: there's no separate KPI/chart-shaped endpoint, and the response
+  /// is never paginated (no `all_records`/`page` params, no `pagination`
+  /// block — always the full matching row set). `date_start`/`date_end` are
+  /// the only non-optional filters (formatted `yyyy-MM-dd`), mirroring the
+  /// other report endpoints' omit-when-empty rule for the rest. This same
+  /// endpoint also takes a `print` query param (used by the POS printer
+  /// flow, not this admin UI) that additionally emits a `printEmployeeSummary`
+  /// socket event from the same query result — irrelevant here since this
+  /// call never sets it.
   Future<List<EmployeeSummaryRow>> getEmployeeSummary({
     required List<int> premIds,
     required List<int> emplIds,

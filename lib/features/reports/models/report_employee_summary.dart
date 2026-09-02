@@ -15,45 +15,68 @@ class EmployeeOption {
   }
 }
 
-/// One row of `orders/employee-summary` (`FUN_GET_EMPLOYEE_SUMMARY`) —
-/// like the propinas report it replaces, this endpoint IS the report:
-/// there's no separate KPI/chart-shaped endpoint, and the response is never
-/// paginated (no `all_records`/`page`, no `pagination` block — it always
-/// returns the full matching row set). Only the non-printer fields of the
-/// SQL function's result are modeled here (`prem_address`/`prem_state`/
-/// `prem_city`/`prem_image_url` and every `prin_*` printer column are
-/// unused by this report).
+/// One entry of an [EmployeeSummaryRow.payments] breakdown — a payment
+/// method's share of that group's total.
+class EmployeeSummaryPayment {
+  final String paymName;
+  final String paymTotal;
+
+  const EmployeeSummaryPayment({required this.paymName, required this.paymTotal});
+
+  factory EmployeeSummaryPayment.fromJson(Map<String, dynamic> json) {
+    return EmployeeSummaryPayment(
+      paymName: (json['paym_name'] ?? '') as String,
+      paymTotal: (json['paym_total'] ?? '0').toString(),
+    );
+  }
+}
+
+/// One group of `orders/employee-summary` (`groupEmployeeSummary`, grouped
+/// server-side by `prem_name` + `empl_name` + `dateserver_created`) — like
+/// the propinas report it replaces, this endpoint IS the report: there's no
+/// separate KPI/chart-shaped endpoint, and the response is never paginated
+/// (no `all_records`/`page`, no `pagination` block — it always returns the
+/// full matching row set). Distinct payment methods within a group no longer
+/// arrive as duplicate rows (as the old per-`orde_state`/`paym_name` shape
+/// did) — they're collected into [payments].
 class EmployeeSummaryRow {
   final String premName;
   final String emplName;
-  final String ordeState;
-  final String paymName;
-  final int totalPedidos;
-  final String ordeTotal;
-  final String totalTips;
   final String dateserverCreated;
+  final String ordeTotal;
+  final String tipsTotal;
+  final int totalCompletados;
+  final int totalCancelados;
+  final List<EmployeeSummaryPayment> payments;
 
   const EmployeeSummaryRow({
     required this.premName,
     required this.emplName,
-    required this.ordeState,
-    required this.paymName,
-    required this.totalPedidos,
-    required this.ordeTotal,
-    required this.totalTips,
     required this.dateserverCreated,
+    required this.ordeTotal,
+    required this.tipsTotal,
+    required this.totalCompletados,
+    required this.totalCancelados,
+    required this.payments,
   });
 
   factory EmployeeSummaryRow.fromJson(Map<String, dynamic> json) {
     return EmployeeSummaryRow(
       premName: (json['prem_name'] ?? '') as String,
       emplName: (json['empl_name'] ?? '') as String,
-      ordeState: (json['orde_state'] ?? '') as String,
-      paymName: (json['paym_name'] ?? '') as String,
-      totalPedidos: int.tryParse(json['total_pedidos']?.toString() ?? '') ?? 0,
-      ordeTotal: (json['orde_total'] ?? '0').toString(),
-      totalTips: (json['total_tips'] ?? '0').toString(),
       dateserverCreated: (json['dateserver_created'] ?? '') as String,
+      ordeTotal: (json['orde_total'] ?? '0').toString(),
+      tipsTotal: (json['tips_total'] ?? '0').toString(),
+      totalCompletados:
+          int.tryParse(json['total_completados']?.toString() ?? '') ?? 0,
+      totalCancelados:
+          int.tryParse(json['total_cancelados']?.toString() ?? '') ?? 0,
+      payments: json['payments'] is List
+          ? (json['payments'] as List)
+              .map((e) =>
+                  EmployeeSummaryPayment.fromJson(Map<String, dynamic>.from(e as Map)))
+              .toList()
+          : const [],
     );
   }
 }

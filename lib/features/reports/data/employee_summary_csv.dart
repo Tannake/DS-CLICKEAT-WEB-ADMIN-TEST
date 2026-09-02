@@ -1,13 +1,17 @@
 import 'package:ds_clickeat_web_admin/features/reports/models/report_employee_summary.dart';
 
-/// Builds a CSV document from `orders/employee-summary` rows.
+/// Builds a CSV document from `orders/employee-summary` groups. Each group
+/// carries a variable-length [EmployeeSummaryRow.payments] breakdown, so
+/// unlike the other CSV exports it's rendered as a single "Métodos de pago"
+/// column (e.g. "Efectivo 100.00, Tarjeta 50.00") rather than one column per
+/// payment method.
 String employeeSummaryToCsv(List<EmployeeSummaryRow> rows) {
   const headers = [
     'Sucursal',
     'Empleado',
-    'Estado del pedido',
-    'Método de pago',
-    'Pedidos',
+    'Completados',
+    'Cancelados',
+    'Métodos de pago',
     'Total',
     'Propinas',
     'Fecha',
@@ -19,11 +23,11 @@ String employeeSummaryToCsv(List<EmployeeSummaryRow> rows) {
     csvRows.add([
       r.premName,
       r.emplName,
-      r.ordeState,
-      r.paymName,
-      '${r.totalPedidos}',
+      '${r.totalCompletados}',
+      '${r.totalCancelados}',
+      r.payments.map((p) => '${p.paymName} ${p.paymTotal}').join(', '),
       r.ordeTotal,
-      r.totalTips,
+      r.tipsTotal,
       r.dateserverCreated,
     ]);
   }

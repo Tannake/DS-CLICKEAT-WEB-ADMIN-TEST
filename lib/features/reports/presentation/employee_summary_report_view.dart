@@ -1,9 +1,6 @@
 import 'package:ds_clickeat_web_admin/features/reports/controllers/employee_summary_controller.dart';
+import 'package:ds_clickeat_web_admin/features/reports/models/report_employee_summary.dart';
 import 'package:ds_clickeat_web_admin/features/reports/models/report_view.dart';
-import 'package:ds_clickeat_web_admin/features/reports/presentation/orders_report_view.dart'
-    show paymentColor;
-import 'package:ds_clickeat_web_admin/features/reports/presentation/sales_report_view.dart'
-    show stateBadge;
 
 /// Maps the live `orders/employee-summary` rows (held in
 /// [EmployeeSummaryState]) into the [ReportView] shape shared by every
@@ -43,9 +40,9 @@ ReportView buildEmployeeSummaryReportView(EmployeeSummaryState state) {
     headers: const [
       ReportTableHeader('Sucursal'),
       ReportTableHeader('Empleado'),
-      ReportTableHeader('Estado'),
-      ReportTableHeader('Método de pago'),
-      ReportTableHeader('Pedidos', alignRight: true),
+      ReportTableHeader('Completados', alignRight: true),
+      ReportTableHeader('Cancelados', alignRight: true),
+      ReportTableHeader('Métodos de pago'),
       ReportTableHeader('Total', alignRight: true),
       ReportTableHeader('Propinas', alignRight: true),
       ReportTableHeader('Fecha'),
@@ -55,15 +52,23 @@ ReportView buildEmployeeSummaryReportView(EmployeeSummaryState state) {
         ReportTableRow([
           ReportCell.plain(r.premName),
           ReportCell.plain(r.emplName, bold: true),
-          stateBadge(r.ordeState),
-          ReportCell.dot(r.paymName, color: paymentColor(r.paymName)),
-          ReportCell.plain('${r.totalPedidos}', alignRight: true),
+          ReportCell.plain('${r.totalCompletados}', alignRight: true),
+          ReportCell.plain('${r.totalCancelados}', alignRight: true),
+          ReportCell.plain(_paymentsStr(r.payments)),
           ReportCell.plain(_moneyStr(r.ordeTotal), alignRight: true),
-          ReportCell.plain(_moneyStr(r.totalTips), bold: true, alignRight: true),
+          ReportCell.plain(_moneyStr(r.tipsTotal), bold: true, alignRight: true),
           ReportCell.plain(_shortDate(r.dateserverCreated)),
         ]),
     ],
   );
+}
+
+/// Joins a group's payment breakdown into a single display string, e.g.
+/// "Efectivo \$100.00, Tarjeta \$50.00" — the table has one cell per group,
+/// not one row per payment method, so multiple payments render inline.
+String _paymentsStr(List<EmployeeSummaryPayment> payments) {
+  if (payments.isEmpty) return '—';
+  return payments.map((p) => '${p.paymName} ${_moneyStr(p.paymTotal)}').join(', ');
 }
 
 /// Formats an `orders/employee-summary` money field ("903.50") keeping
