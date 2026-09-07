@@ -179,6 +179,17 @@ class PrintersController extends StateNotifier<PrintersState> {
     () => _patchActive(printer.prinId, !printer.prinIsActive),
   );
 
+  /// Sends a test print for [printer]. Fire-and-forget: doesn't touch the
+  /// list state, just reports an error message on failure.
+  Future<String?> testPrint(int premId, Printer printer) async {
+    try {
+      await _repo.testPrint(premId: premId, printer: printer);
+      return null;
+    } catch (e) {
+      return e.toString().replaceFirst('Exception: ', '');
+    }
+  }
+
   void _patchActive(int prinId, bool isActive) {
     state = state.copyWith(
       printers: [

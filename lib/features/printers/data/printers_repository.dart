@@ -110,4 +110,16 @@ class PrintersRepository {
     final message = (data is Map ? data['message'] : null) as String?;
     throw Exception(message ?? 'La operación no se pudo completar.');
   }
+
+  /// POST `premises/printer-test` — sends a test print to the printer's
+  /// premise/room so the admin can confirm it's configured correctly.
+  Future<void> testPrint({required int premId, required Printer printer}) async {
+    final body = printer.toJson();
+    body['prem_id'] = premId;
+    final res = await _dio.post('premises/printer-test', data: body);
+    final data = res.data;
+    if (data is Map && data['state'] == 1) return;
+    final message = (data is Map ? data['message'] : null) as String?;
+    throw Exception(message ?? 'No se pudo enviar la prueba de impresión.');
+  }
 }

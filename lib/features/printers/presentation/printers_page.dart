@@ -187,6 +187,7 @@ class _PrintersPageState extends ConsumerState<PrintersPage> {
       onSetDefault: (p) => _setDefault(premId, p),
       onEdit: (p) => _edit(premId, p),
       onDelete: (p) => _delete(premId, p),
+      onTestPrint: (p) => _testPrint(premId, p),
     );
   }
 
@@ -280,6 +281,10 @@ class _PrintersPageState extends ConsumerState<PrintersPage> {
     if (error != null) _toast(error);
   }
 
+  Future<String?> _testPrint(int premId, Printer printer) {
+    return ref.read(printersControllerProvider.notifier).testPrint(premId, printer);
+  }
+
   // ===== shared helpers =====================================================
 
   void _toast(String message) {
@@ -332,6 +337,7 @@ class _Col {
 }
 
 const _kActionsColWidth = 96.0;
+const _kTestPrintColWidth = 170.0;
 
 class _PrintersTable extends StatelessWidget {
   final List<Printer> printers;
@@ -339,6 +345,7 @@ class _PrintersTable extends StatelessWidget {
   final void Function(Printer) onSetDefault;
   final void Function(Printer) onEdit;
   final void Function(Printer) onDelete;
+  final Future<String?> Function(Printer) onTestPrint;
 
   const _PrintersTable({
     required this.printers,
@@ -346,6 +353,7 @@ class _PrintersTable extends StatelessWidget {
     required this.onSetDefault,
     required this.onEdit,
     required this.onDelete,
+    required this.onTestPrint,
   });
 
   @override
@@ -365,7 +373,7 @@ class _PrintersTable extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: ScrollableTable(
-        minWidth: 900,
+        minWidth: 900 + _kTestPrintColWidth,
         child: Column(
           children: [
             const _PrintersTableHeader(),
@@ -381,6 +389,7 @@ class _PrintersTable extends StatelessWidget {
                     onSetDefault: () => onSetDefault(printer),
                     onEdit: () => onEdit(printer),
                     onDelete: () => onDelete(printer),
+                    onTestPrint: () => onTestPrint(printer),
                   );
                 },
               ),
@@ -431,6 +440,14 @@ class _PrintersTableHeader extends StatelessWidget {
               textAlign: TextAlign.end,
             ),
           ),
+          SizedBox(
+            width: _kTestPrintColWidth,
+            child: const Text(
+              'PRUEBA',
+              style: _headerStyle,
+              textAlign: TextAlign.end,
+            ),
+          ),
         ],
       ),
     );
@@ -444,6 +461,7 @@ class _PrinterRow extends StatelessWidget {
   final VoidCallback onSetDefault;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final Future<String?> Function() onTestPrint;
 
   const _PrinterRow({
     required this.printer,
@@ -452,6 +470,7 @@ class _PrinterRow extends StatelessWidget {
     required this.onSetDefault,
     required this.onEdit,
     required this.onDelete,
+    required this.onTestPrint,
   });
 
   @override
@@ -575,7 +594,64 @@ class _PrinterRow extends StatelessWidget {
               ],
             ),
           ),
+          SizedBox(
+            width: _kTestPrintColWidth,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: _TestPrintButton(onPressed: onTestPrint),
+            ),
+          ),
         ],
+      ),
+    );
+  }
+}
+
+class _TestPrintButton extends StatefulWidget {
+  final Future<String?> Function() onPressed;
+
+  const _TestPrintButton({required this.onPressed});
+
+  @override
+  State<_TestPrintButton> createState() => _TestPrintButtonState();
+}
+
+class _TestPrintButtonState extends State<_TestPrintButton> {
+  bool _sending = false;
+
+  Future<void> _handleTap() async {
+    if (_sending) return;
+    setState(() => _sending = true);
+    final error = await widget.onPressed();
+    if (!mounted) return;
+    setState(() => _sending = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(error ?? 'Prueba de impresión enviada.')),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: _sending ? null : _handleTap,
+      icon: _sending
+          ? const SizedBox(
+              width: 14,
+              height: 14,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : const Icon(Icons.print_outlined, size: 16),
+      label: const Text('Imprimir prueba'),
+      style: OutlinedButton.styleFrom(
+        visualDensity: VisualDensity.compact,
+        foregroundColor: AppColors.navy,
+        side: const BorderSide(color: AppColors.line),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        textStyle: const TextStyle(
+          fontSize: 12.5,
+          fontWeight: FontWeight.w600,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(99)),
       ),
     );
   }

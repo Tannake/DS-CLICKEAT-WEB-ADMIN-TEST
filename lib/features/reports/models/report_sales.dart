@@ -2,7 +2,10 @@
 /// the "Exportar CSV" button and as the sales report's detail table rows
 /// (`reports/sales` no longer returns per-order rows itself). `ordeTotal`
 /// arrives as a formatted string ("323.00") rather than a number — fine for
-/// the CSV cell, parsed with `num.tryParse` for the table.
+/// the CSV cell, parsed with `num.tryParse` for the table. `tips_total`
+/// arrives the same way ("0.00"), so it's parsed with `num.tryParse` up
+/// front here instead, since (unlike `ordeTotal`) every use of it needs a
+/// number.
 class SalesCsvRow {
   final int premId;
   final String premName;
@@ -13,7 +16,7 @@ class SalesCsvRow {
   final String ordeState;
   final String ordeType;
   final String paymName;
-  final num tipsPercentage;
+  final num tipsTotal;
   final String reasName;
   final String emplName;
   final String dateserverCreated;
@@ -28,7 +31,7 @@ class SalesCsvRow {
     required this.ordeState,
     required this.ordeType,
     required this.paymName,
-    required this.tipsPercentage,
+    required this.tipsTotal,
     required this.reasName,
     required this.emplName,
     required this.dateserverCreated,
@@ -45,7 +48,7 @@ class SalesCsvRow {
       ordeState: (json['orde_state'] ?? '') as String,
       ordeType: (json['orde_type'] ?? '') as String,
       paymName: (json['paym_name'] ?? '') as String,
-      tipsPercentage: (json['tips_percentage'] as num?) ?? 0,
+      tipsTotal: num.tryParse((json['tips_total'] ?? '0').toString()) ?? 0,
       reasName: (json['reas_name'] ?? '') as String,
       emplName: (json['empl_name'] ?? '') as String,
       dateserverCreated: (json['dateserver_created'] ?? '') as String,

@@ -45,7 +45,7 @@ final router = GoRouter(
           builder: (context, state) => const TablesPage(),
         ),
         GoRoute(
-          path: '/app/cobros',
+          path: '/app/payments',
           builder: (context, state) => const CobrosPage(),
         ),
         GoRoute(
@@ -70,22 +70,22 @@ final router = GoRouter(
               const ReportsPage(type: ReportType.dashboard),
         ),
         GoRoute(
-          path: '/app/reports/ventas',
+          path: '/app/reports/sales',
           builder: (context, state) =>
               const ReportsPage(type: ReportType.ventas),
         ),
         GoRoute(
-          path: '/app/reports/pedidos',
+          path: '/app/reports/orders',
           builder: (context, state) =>
               const ReportsPage(type: ReportType.pedidos),
         ),
         GoRoute(
-          path: '/app/reports/productos',
+          path: '/app/reports/products',
           builder: (context, state) =>
               const ReportsPage(type: ReportType.productos),
         ),
         GoRoute(
-          path: '/app/reports/categorias',
+          path: '/app/reports/categories',
           builder: (context, state) =>
               const ReportsPage(type: ReportType.categorias),
         ),

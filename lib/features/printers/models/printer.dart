@@ -58,6 +58,23 @@ class Printer {
         prinIsActive: prinIsActive ?? this.prinIsActive,
       );
 
+  /// Mirrors the shape backend expects for `premises/printer-test`: the
+  /// full printer row (the caller adds `prem_id` on top).
+  Map<String, dynamic> toJson() => {
+        'prin_id': prinId,
+        'prin_name': prinName,
+        'prin_connection_type': prinConnectionType,
+        'prin_usage_type': prinUsageType,
+        'prin_ip': prinIp,
+        'prin_port': prinPort,
+        'prin_windows_name': prinWindowsName,
+        'prin_paper_width': prinPaperWidth,
+        'prin_auto_cut': prinAutoCut,
+        'prin_beep': prinBeep,
+        'prin_is_default': prinIsDefault,
+        'prin_is_active': prinIsActive,
+      };
+
   factory Printer.fromJson(Map<String, dynamic> j) {
     return Printer(
       prinId: (j['prin_id'] as num).toInt(),
